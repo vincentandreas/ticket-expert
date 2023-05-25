@@ -11,11 +11,20 @@ type PromotorRepository interface {
 }
 
 type EventRepository interface {
-	SaveEvent(event models.Event)
+	SaveEvent(event models.Event) error
+}
+
+type BookRepository interface {
+	SaveBooking(event models.BookingTicket) error
+}
+type PurchaseRepository interface {
+	SavePurchase(event models.PurchasedTicket) error
 }
 
 type AllRepository interface {
 	UserRepository
 	PromotorRepository
 	EventRepository
+	BookRepository
+	PurchaseRepository
 }

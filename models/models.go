@@ -46,20 +46,13 @@ type ApiResponse struct {
 	RespMsg  string `json:"responseMessage"`
 }
 
-//user
-//user_id
-//full_name
-//user_name
-//user_password
-//
-
 type Event struct {
 	gorm.Model
 	EventName     string         `json:"event_name" validate:"required"`
 	EventCategory string         `json:"event_category" validate:"required"`
 	EventLocation string         `json:"event_location" validate:"required"`
-	PromotorID    uint64         `gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
-	EventDetails  []*EventDetail `json:"event_details"`
+	PromotorID    uint64         `json:"promotor_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	EventDetails  []*EventDetail `json:"event_details" validate:"min=1,dive"`
 }
 
 type EventDetail struct {
@@ -75,14 +68,16 @@ type EventDetail struct {
 
 type PurchasedTicket struct {
 	gorm.Model
-	PurchasedAt   time.Time
-	UserID        uint64 `gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
-	EventDetailID uint64 `gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	PurchasedAt     time.Time
+	UserID          uint64 `json:"user_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	EventDetailID   uint64 `json:"event_detail_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	BookingTicketID uint64 `json:"booking_ticket_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 }
 
 type BookingTicket struct {
 	gorm.Model
-	Qty           uint64
-	UserID        uint64 `gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
-	EventDetailID uint64 `gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	Qty             uint64 `json:"qty" validate:"required"`
+	UserID          uint64 `json:"user_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	EventDetailID   uint64 `json:"event_detail_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	PurchasedTicket PurchasedTicket
 }

@@ -6,9 +6,11 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"ticket-expert/models"
 	"ticket-expert/repo"
+	"ticket-expert/utilities"
 )
 
 type BaseHandler struct {
@@ -20,6 +22,8 @@ func HandleRequests(h *BaseHandler) *mux.Router {
 	router.HandleFunc("/api/user", h.HandleSaveUser).Methods("POST")
 	router.HandleFunc("/api/promotor", h.HandleSavePromotor).Methods("POST")
 	router.HandleFunc("/api/event", h.HandleSaveEvent).Methods("POST")
+	router.HandleFunc("/api/book", h.HandleSaveBooking).Methods("POST")
+	router.HandleFunc("/api/purchase", h.HandleSavePurchased).Methods("POST")
 	router.HandleFunc("/api/health", h.CheckHealth).Methods("GET")
 	return router
 }
@@ -47,7 +51,7 @@ func (h *BaseHandler) HandleSaveUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.repo.SaveUser(userRequest)
-	WriteSuccessResp(w)
+	utilities.WriteSuccessResp(w)
 }
 
 func (h *BaseHandler) HandleSavePromotor(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +63,7 @@ func (h *BaseHandler) HandleSavePromotor(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	h.repo.SavePromotor(reqObj)
-	WriteSuccessResp(w)
+	utilities.WriteSuccessResp(w)
 }
 
 func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
@@ -70,15 +74,47 @@ func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
 	if !isValidRequest(w, reqObj) {
 		return
 	}
-	h.repo.SaveEvent(reqObj)
-	WriteSuccessResp(w)
+	err := h.repo.SaveEvent(reqObj)
+	if err != nil {
+		log.Println(err)
+		utilities.WriteErrorResp(w, 403, "Failed to save data")
+		return
+	}
+	utilities.WriteSuccessResp(w)
 }
 
-func WriteSuccessResp(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	temp := models.ApiResponse{"", "00", "Success"}
-	json.NewEncoder(w).Encode(temp)
+func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var reqObj models.BookingTicket
+	json.Unmarshal(reqBody, &reqObj)
+
+	if !isValidRequest(w, reqObj) {
+		return
+	}
+	err := h.repo.SaveBooking(reqObj)
+	if err != nil {
+		log.Println(err)
+		utilities.WriteErrorResp(w, 403, "Failed to save data")
+		return
+	}
+	utilities.WriteSuccessResp(w)
+}
+
+func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var reqObj models.PurchasedTicket
+	json.Unmarshal(reqBody, &reqObj)
+
+	if !isValidRequest(w, reqObj) {
+		return
+	}
+	err := h.repo.SavePurchase(reqObj)
+	if err != nil {
+		log.Println(err)
+		utilities.WriteErrorResp(w, 403, "Failed to save data")
+		return
+	}
+	utilities.WriteSuccessResp(w)
 }
 
 func isValidRequest(w http.ResponseWriter, request interface{}) bool {
@@ -87,10 +123,7 @@ func isValidRequest(w http.ResponseWriter, request interface{}) bool {
 
 	if err != nil {
 		fmt.Println("Validation failed")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json")
-		temp := models.ApiResponse{"", "01", "Request not valid"}
-		json.NewEncoder(w).Encode(temp)
+		utilities.WriteErrorResp(w, 400, "Request not valid")
 		return false
 	}
 	return true
