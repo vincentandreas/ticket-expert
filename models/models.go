@@ -42,8 +42,14 @@ type User struct {
 
 type ApiResponse struct {
 	Result   string `json:"result"`
-	RespCode string `json:"responseCode"`
-	RespMsg  string `json:"responseMessage"`
+	RespCode string `json:"response_code"`
+	RespMsg  string `json:"response_message"`
+}
+
+type ApiGetResponse struct {
+	Result   interface{} `json:"result"`
+	RespCode string      `json:"response_code"`
+	RespMsg  string      `json:"response_message"`
 }
 
 type Event struct {
@@ -80,4 +86,13 @@ type BookingTicket struct {
 	UserID          uint64 `json:"user_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	EventDetailID   uint64 `json:"event_detail_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	PurchasedTicket PurchasedTicket
+}
+
+type Qres struct {
+	EventID       string `json:"event_id"`
+	EventName     string `json:"event_name"`
+	EventCategory string `json:"event_category"`
+	EventLocation string `json:"event_location"`
+	PromotorName  string `json:"promotor_name"`
+	PromotorID    uint64 `json:"promotor_id"`
 }

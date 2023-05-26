@@ -21,7 +21,10 @@ func HandleRequests(h *BaseHandler) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/api/user", h.HandleSaveUser).Methods("POST")
 	router.HandleFunc("/api/promotor", h.HandleSavePromotor).Methods("POST")
+	//router.HandleFunc("/api/promotor/{id}", h.HandleSavePromotor).Methods("GET")
 	router.HandleFunc("/api/event", h.HandleSaveEvent).Methods("POST")
+	router.HandleFunc("/api/event", h.HandleSearchEvent).Methods("GET")
+	router.HandleFunc("/api/event/{id}", h.HandleSearchEventById).Methods("GET")
 	router.HandleFunc("/api/book", h.HandleSaveBooking).Methods("POST")
 	router.HandleFunc("/api/purchase", h.HandleSavePurchased).Methods("POST")
 	router.HandleFunc("/api/health", h.CheckHealth).Methods("GET")
@@ -115,6 +118,31 @@ func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request
 		return
 	}
 	utilities.WriteSuccessResp(w)
+}
+
+func (h *BaseHandler) HandleSearchEventById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idstr := vars["id"]
+	res, err := h.repo.FindByEventId(idstr)
+	if err != nil {
+		log.Println(err)
+		utilities.WriteErrorResp(w, 403, "Failed to get data")
+		return
+	}
+	utilities.WriteSuccessWithDataResp(w, res)
+}
+
+func (h *BaseHandler) HandleSearchEvent(w http.ResponseWriter, r *http.Request) {
+	qparams := r.URL.Query()
+	city := qparams.Get("city")
+	category := qparams.Get("category")
+	res, err := h.repo.FindByCondition(city, category)
+	if err != nil {
+		log.Println(err)
+		utilities.WriteErrorResp(w, 403, "Failed to get data")
+		return
+	}
+	utilities.WriteSuccessWithDataResp(w, res)
 }
 
 func isValidRequest(w http.ResponseWriter, request interface{}) bool {

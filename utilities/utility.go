@@ -28,3 +28,10 @@ func WriteSuccessResp(w http.ResponseWriter) {
 	temp := models.ApiResponse{"", "00", "Success"}
 	json.NewEncoder(w).Encode(temp)
 }
+
+func WriteSuccessWithDataResp(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	temp := models.ApiGetResponse{data, "00", "Success"}
+	json.NewEncoder(w).Encode(temp)
+}

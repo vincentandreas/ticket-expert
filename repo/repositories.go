@@ -12,6 +12,8 @@ type PromotorRepository interface {
 
 type EventRepository interface {
 	SaveEvent(event models.Event) error
+	FindByCondition(location string, category string) ([]models.Qres, error)
+	FindByEventId(id string) (models.Event, error)
 }
 
 type BookRepository interface {
