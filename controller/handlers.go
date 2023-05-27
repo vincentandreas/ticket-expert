@@ -150,6 +150,7 @@ func isValidRequest(w http.ResponseWriter, request interface{}) bool {
 	err := validate.Struct(request)
 
 	if err != nil {
+		fmt.Println(err)
 		fmt.Println("Validation failed")
 		utilities.WriteErrorResp(w, 400, "Request not valid")
 		return false

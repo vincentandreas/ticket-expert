@@ -2,7 +2,6 @@ package models
 
 import (
 	"gorm.io/gorm"
-	"time"
 )
 
 type Promotor struct {
@@ -11,31 +10,11 @@ type Promotor struct {
 	Events       []Event
 }
 
-//type User struct {
-//	gorm.Model
-//	Email                string `validate:"omitempty,optional_between=6 75,email" gorm:"type:varchar(75);not null;unique" json:"email"`
-//	Password             string `gorm:"not null" json:"-"`
-//	Name                 string `validate:"optional_between=1 100" gorm:"type:varchar(100);not null" json:"name"`
-//	Role                 int    `validate:"optional_between=1 6" gorm:"not null" json:"role"`
-//	Status               int    `validate:"optional_between=1 2" json:"status"`
-//	PlainPassword        string `validate:"optional_between=8 50" gorm:"-" json:"plainPassword"`
-//	PlainPasswordConfirm string `validate:"optional_between=8 50" gorm:"-" json:"plainPasswordConfirm"`
-//}
-
-//
-//type GenSiteParam struct {
-//	Username   string `json:"username" validate:"required,omitempty"`
-//	Password   string `json:"password" validate:"required"`
-//	Site       string `json:"site" validate:"required"`
-//	KeyCounter int    `json:"keyCounter" validate:"required,min=1,max=4294967295"`
-//	KeyPurpose string `json:"keyPurpose" validate:"required,oneof=password loginName answer"`
-//	KeyType    string `json:"keyType" validate:"required,oneof=med long max short basic pin name phrase"`
-//}
 type User struct {
 	gorm.Model
-	FullName         string `json:"full_name" validate:"required"`
-	UserName         string `json:"user_name" validate:"required"`
-	Password         string `json:"password" validate:"required"`
+	FullName         string `json:"full_name" validate:"required" gorm:"not null"`
+	UserName         string `json:"user_name" validate:"required" gorm:"not null"`
+	Password         string `json:"password" validate:"required" gorm:"not null"`
 	BookingTickets   []BookingTicket
 	PurchasedTickets []PurchasedTicket
 }
@@ -54,45 +33,58 @@ type ApiGetResponse struct {
 
 type Event struct {
 	gorm.Model
-	EventName     string         `json:"event_name" validate:"required"`
-	EventCategory string         `json:"event_category" validate:"required"`
-	EventLocation string         `json:"event_location" validate:"required"`
-	PromotorID    uint64         `json:"promotor_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
-	EventDetails  []*EventDetail `json:"event_details" validate:"min=1,dive"`
+	EventName      string         `json:"event_name" validate:"required"  gorm:"not null"`
+	EventCategory  string         `json:"event_category" validate:"required"  gorm:"not null"`
+	EventLocation  string         `json:"event_location" validate:"required"  gorm:"not null"`
+	PromotorID     uint           `json:"promotor_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	EventDetails   []*EventDetail `json:"event_details" validate:"min=1,dive"`
+	BookingTickets []BookingTicket
 }
 
 type EventDetail struct {
 	gorm.Model
-	TicketClass      string `json:"ticket_class" validate:"required"`
-	TicketPrice      string `json:"ticket_price" validate:"required"`
-	TicketQuota      string `json:"ticket_quota" validate:"required"`
-	TicketRemaining  string `json:"ticket_remaining" validate:"required"`
-	EventID          uint64 `gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
-	PurchasedTickets []PurchasedTicket
-	BookingTickets   []BookingTicket
+	TicketClass     string `json:"ticket_class" validate:"required"`
+	TicketPrice     string `json:"ticket_price" validate:"required"`
+	TicketQuota     uint   `json:"ticket_quota" validate:"required"`
+	TicketRemaining uint   `json:"ticket_remaining" validate:"required"`
+	EventID         uint   `gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	BookingDetail   []*BookingDetail
 }
 
 type PurchasedTicket struct {
 	gorm.Model
-	PurchasedAt     time.Time
-	UserID          uint64 `json:"user_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
-	EventDetailID   uint64 `json:"event_detail_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
-	BookingTicketID uint64 `json:"booking_ticket_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	UserID          uint   `json:"user_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	BookingTicketID uint   `json:"booking_ticket_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	PaymentMethod   string `json:"payment_method" validate:"required"`
+	PaymentStatus   string `json:"payment_status" validate:"required"`
 }
 
+//todo scheduler for expired the booking.
 type BookingTicket struct {
 	gorm.Model
-	Qty             uint64 `json:"qty" validate:"required"`
-	UserID          uint64 `json:"user_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
-	EventDetailID   uint64 `json:"event_detail_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
-	PurchasedTicket PurchasedTicket
+	TotalPrice      string           `json:"total_price" gorm:"not null"`
+	AdminFee        string           `json:"admin_fee" gorm:"not null"`
+	UserID          uint             `json:"user_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	BookingDetails  []*BookingDetail `json:"booking_details" validate:"min=1,dive"`
+	PurchasedTicket *PurchasedTicket `validate:"omitempty"`
+	BookingStatus   string           `json:"booking_status" gorm:"not null"`
+	EventID         uint             `json:"event_id" validate:"required"`
+}
+
+type BookingDetail struct {
+	gorm.Model
+	EventDetailID   uint   `json:"event_detail_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	Qty             uint   `json:"qty" validate:"required" gorm:"not null"`
+	Price           string `json:"price" validate:"required" gorm:"not null"`
+	SubTotal        string `gorm:"not null"`
+	BookingTicketID uint   `json:"booking_ticket_id" gorm:"not null"`
 }
 
 type Qres struct {
-	EventID       string `json:"event_id"`
+	EventID       uint   `json:"event_id"`
 	EventName     string `json:"event_name"`
 	EventCategory string `json:"event_category"`
 	EventLocation string `json:"event_location"`
 	PromotorName  string `json:"promotor_name"`
-	PromotorID    uint64 `json:"promotor_id"`
+	PromotorID    uint   `json:"promotor_id"`
 }

@@ -13,12 +13,13 @@ import (
 )
 
 func doMigration(db *gorm.DB) {
-	db.AutoMigrate(&models.User{})
 	db.AutoMigrate(&models.Promotor{})
+	db.AutoMigrate(&models.User{})
 	db.AutoMigrate(&models.Event{})
 	db.AutoMigrate(&models.EventDetail{})
 	db.AutoMigrate(&models.PurchasedTicket{})
 	db.AutoMigrate(&models.BookingTicket{})
+	db.AutoMigrate(&models.BookingDetail{})
 }
 
 func dbSetup() (*gorm.DB, error) {
@@ -30,7 +31,9 @@ func dbSetup() (*gorm.DB, error) {
 	conn, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  dbParams,
 		PreferSimpleProtocol: true,
-	}), &gorm.Config{})
+	}), &gorm.Config{
+		//Logger: logger.Default.LogMode(logger.Info),
+	})
 	return conn, err
 }
 func main() {
