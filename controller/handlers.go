@@ -14,7 +14,7 @@ import (
 )
 
 type BaseHandler struct {
-	repo repo.AllRepository
+	Repo repo.AllRepository
 }
 
 func HandleRequests(h *BaseHandler) *mux.Router {
@@ -33,7 +33,7 @@ func HandleRequests(h *BaseHandler) *mux.Router {
 
 func NewBaseHandler(repo repo.AllRepository) *BaseHandler {
 	return &BaseHandler{
-		repo: repo,
+		Repo: repo,
 	}
 }
 
@@ -53,7 +53,7 @@ func (h *BaseHandler) HandleSaveUser(w http.ResponseWriter, r *http.Request) {
 	if !isValidRequest(w, userRequest) {
 		return
 	}
-	h.repo.SaveUser(userRequest)
+	h.Repo.SaveUser(userRequest, r.Context())
 	utilities.WriteSuccessResp(w)
 }
 
@@ -65,7 +65,7 @@ func (h *BaseHandler) HandleSavePromotor(w http.ResponseWriter, r *http.Request)
 	if !isValidRequest(w, reqObj) {
 		return
 	}
-	h.repo.SavePromotor(reqObj)
+	h.Repo.SavePromotor(reqObj)
 	utilities.WriteSuccessResp(w)
 }
 
@@ -77,7 +77,7 @@ func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
 	if !isValidRequest(w, reqObj) {
 		return
 	}
-	err := h.repo.SaveEvent(reqObj)
+	err := h.Repo.SaveEvent(reqObj)
 	if err != nil {
 		log.Println(err)
 		utilities.WriteErrorResp(w, 403, "Failed to save data")
@@ -94,7 +94,7 @@ func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) 
 	if !isValidRequest(w, reqObj) {
 		return
 	}
-	err := h.repo.SaveBooking(reqObj)
+	err := h.Repo.SaveBooking(reqObj)
 	if err != nil {
 		log.Println(err)
 		utilities.WriteErrorResp(w, 403, "Failed to save data")
@@ -111,7 +111,7 @@ func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request
 	if !isValidRequest(w, reqObj) {
 		return
 	}
-	err := h.repo.SavePurchase(reqObj)
+	err := h.Repo.SavePurchase(reqObj)
 	if err != nil {
 		log.Println(err)
 		utilities.WriteErrorResp(w, 403, "Failed to save data")
@@ -123,7 +123,7 @@ func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request
 func (h *BaseHandler) HandleSearchEventById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idstr := vars["id"]
-	res, err := h.repo.FindByEventId(idstr)
+	res, err := h.Repo.FindByEventId(idstr)
 	if err != nil {
 		log.Println(err)
 		utilities.WriteErrorResp(w, 403, "Failed to get data")
@@ -136,7 +136,7 @@ func (h *BaseHandler) HandleSearchEvent(w http.ResponseWriter, r *http.Request) 
 	qparams := r.URL.Query()
 	city := qparams.Get("city")
 	category := qparams.Get("category")
-	res, err := h.repo.FindByCondition(city, category)
+	res, err := h.Repo.FindByCondition(city, category)
 	if err != nil {
 		log.Println(err)
 		utilities.WriteErrorResp(w, 403, "Failed to get data")

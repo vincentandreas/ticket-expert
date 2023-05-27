@@ -1,9 +1,13 @@
 package repo
 
-import "ticket-expert/models"
+import (
+	"context"
+	"ticket-expert/models"
+)
 
 type UserRepository interface {
-	SaveUser(user models.User)
+	SaveUser(user models.User, ctx context.Context)
+	FindUserById(id uint, ctx context.Context) (models.User, error)
 }
 
 type PromotorRepository interface {
