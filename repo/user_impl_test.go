@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func dbMock(t *testing.T) (*sql.DB, *gorm.DB, sqlmock.Sqlmock) {
+func DbMock(t *testing.T) (*sql.DB, *gorm.DB, sqlmock.Sqlmock) {
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatal(err)
@@ -32,8 +32,7 @@ func dbMock(t *testing.T) (*sql.DB, *gorm.DB, sqlmock.Sqlmock) {
 }
 
 func TestFindUser(t *testing.T) {
-
-	sqlDB, db, mock := dbMock(t)
+	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 
 	implObj := NewImplementation(db)
@@ -53,13 +52,14 @@ func TestFindUser(t *testing.T) {
 }
 
 func TestAddUser(t *testing.T) {
-	sqlDB, db, mock := dbMock(t)
+	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 	implObj := NewImplementation(db)
 
 	expectedSQL := "INSERT INTO \"users\" (.+) VALUES (.+)"
 	mock.ExpectBegin()
-	mock.ExpectQuery(expectedSQL).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
+	addRow := sqlmock.NewRows([]string{"id"}).AddRow("1")
+	mock.ExpectQuery(expectedSQL).WillReturnRows(addRow)
 	mock.ExpectCommit()
 	var reqUser models.User
 	implObj.SaveUser(reqUser, context.TODO())

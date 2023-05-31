@@ -1,14 +1,22 @@
 package repo
 
 import (
+	"context"
 	"errors"
 	"gorm.io/gorm"
+	"log"
 	"os"
 	"strconv"
 	"ticket-expert/models"
 )
 
-func (repo *Implementation) SaveBooking(req models.BookingTicket) error {
+func (repo *Implementation) UpdTicketQty(id uint, quota uint, tx *gorm.DB, ctx context.Context) error {
+	var evdetails models.EventDetail
+	err := tx.WithContext(ctx).Model(evdetails).Where("id = ?", id).Update("ticket_quota", quota).Error
+	return err
+}
+
+func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Context) error {
 	var grandTotal float64 = 0
 	bookDetails := req.BookingDetails
 
@@ -25,7 +33,7 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket) error {
 	req.TotalPrice = strconv.FormatFloat(grandTotal, 'f', -1, 64)
 	req.AdminFee = admEnv
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var evData models.Event
 		tx.Preload("EventDetails").Where("events.id = ?", req.EventID).Find(&evData)
 
@@ -37,8 +45,10 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket) error {
 					if evdetails[j].TicketQuota < bookDetails[i].Qty {
 						return errors.New("ticket quota not enough")
 					} else {
+						log.Println("dalem elseeeee")
 						deductedQuota := evdetails[j].TicketQuota - bookDetails[i].Qty
-						err := tx.Model(evdetails).Where("id = ?", evdetails[j].ID).Update("ticket_quota", deductedQuota).Error
+						err := repo.UpdTicketQty(evdetails[j].ID, deductedQuota, tx, ctx)
+						//err := tx.Model(evdetails).Where("id = ?", evdetails[j].ID).Update("ticket_quota", deductedQuota).Error
 						if err != nil {
 							return err
 						}

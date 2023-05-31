@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"gorm.io/gorm"
 	"ticket-expert/models"
 )
 
@@ -11,17 +12,18 @@ type UserRepository interface {
 }
 
 type PromotorRepository interface {
-	SavePromotor(promotor models.Promotor)
+	SavePromotor(promotor models.Promotor, ctx context.Context)
 }
 
 type EventRepository interface {
-	SaveEvent(event models.Event) error
-	FindByCondition(location string, category string) ([]models.Qres, error)
-	FindByEventId(id string) (models.Event, error)
+	SaveEvent(event models.Event, ctx context.Context) error
+	FindEventByCondition(location string, category string, ctx context.Context) ([]models.Qres, error)
+	FindByEventId(id string, ctx context.Context) (models.Event, error)
 }
 
 type BookRepository interface {
-	SaveBooking(event models.BookingTicket) error
+	SaveBooking(event models.BookingTicket, ctx context.Context) error
+	UpdTicketQty(id uint, quota uint, tx *gorm.DB, ctx context.Context) error
 }
 type PurchaseRepository interface {
 	SavePurchase(event models.PurchasedTicket) error
