@@ -7,7 +7,7 @@ import (
 
 type UserRepository interface {
 	SaveUser(user models.User, ctx context.Context)
-	FindUserById(id uint, ctx context.Context) (models.User, error)
+	FindUserById(id uint, ctx context.Context) (*models.User, error)
 }
 
 type PromotorRepository interface {

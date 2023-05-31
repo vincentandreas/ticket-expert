@@ -8,7 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"testing"
+	"ticket-expert/models"
 	"time"
 )
 
@@ -19,14 +21,17 @@ func dbMock(t *testing.T) (*sql.DB, *gorm.DB, sqlmock.Sqlmock) {
 	}
 	gormdb, err := gorm.Open(postgres.New(postgres.Config{
 		Conn: sqldb,
-	}), &gorm.Config{})
+	}), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+
 	if err != nil {
 		t.Fatal(err)
 	}
 	return sqldb, gormdb, mock
 }
 
-func TestAddUser(t *testing.T) {
+func TestFindUser(t *testing.T) {
 
 	sqlDB, db, mock := dbMock(t)
 	defer sqlDB.Close()
@@ -40,10 +45,23 @@ func TestAddUser(t *testing.T) {
 	mock.ExpectQuery(expectedSQL).WillReturnRows(users)
 	mock.ExpectQuery(expectedSQL).WillReturnRows(users)
 	_, res := implObj.FindUserById(1, context.TODO())
-	assert.Nil(t, res.Error)
+	assert.Nil(t, res)
 
 	_, res2 := implObj.FindUserById(2, context.TODO())
-	assert.True(t, errors.Is(res2.Error, gorm.ErrRecordNotFound))
+	assert.True(t, errors.Is(res2, gorm.ErrRecordNotFound))
 	assert.Nil(t, mock.ExpectationsWereMet())
+}
 
+func TestAddUser(t *testing.T) {
+	sqlDB, db, mock := dbMock(t)
+	defer sqlDB.Close()
+	implObj := NewImplementation(db)
+
+	expectedSQL := "INSERT INTO \"users\" (.+) VALUES (.+)"
+	mock.ExpectBegin()
+	mock.ExpectQuery(expectedSQL).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
+	mock.ExpectCommit()
+	var reqUser models.User
+	implObj.SaveUser(reqUser, context.TODO())
+	assert.Nil(t, mock.ExpectationsWereMet())
 }

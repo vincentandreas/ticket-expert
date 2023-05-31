@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"log"
 	"net/http"
 	"os"
@@ -32,7 +33,7 @@ func dbSetup() (*gorm.DB, error) {
 		DSN:                  dbParams,
 		PreferSimpleProtocol: true,
 	}), &gorm.Config{
-		//Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Info),
 	})
 	return conn, err
 }

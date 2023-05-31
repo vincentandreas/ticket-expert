@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"gorm.io/gorm"
 	"ticket-expert/models"
 	"ticket-expert/utilities"
 )
@@ -12,8 +11,8 @@ func (repo *Implementation) SaveUser(user models.User, ctx context.Context) {
 	repo.db.WithContext(ctx).Create(&user)
 }
 
-func (repo *Implementation) FindUserById(id uint, ctx context.Context) (*models.User, *gorm.DB) {
+func (repo *Implementation) FindUserById(id uint, ctx context.Context) (*models.User, error) {
 	var user *models.User
-	res := repo.db.WithContext(ctx).Where("id = ?", id).First(&user)
-	return user, res
+	err := repo.db.WithContext(ctx).Where("id = ?", id).First(&user).Error
+	return user, err
 }
