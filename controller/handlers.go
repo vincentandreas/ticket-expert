@@ -111,7 +111,7 @@ func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request
 	if !isValidRequest(w, reqObj) {
 		return
 	}
-	err := h.Repo.SavePurchase(reqObj)
+	err := h.Repo.SavePurchase(reqObj, r.Context())
 	if err != nil {
 		log.Println(err)
 		utilities.WriteErrorResp(w, 403, "Failed to save data")

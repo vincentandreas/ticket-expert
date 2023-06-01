@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"gorm.io/gorm"
-	"log"
 	"os"
 	"strconv"
 	"ticket-expert/models"
@@ -45,7 +44,6 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Co
 					if evdetails[j].TicketQuota < bookDetails[i].Qty {
 						return errors.New("ticket quota not enough")
 					} else {
-						log.Println("dalem elseeeee")
 						deductedQuota := evdetails[j].TicketQuota - bookDetails[i].Qty
 						err := repo.UpdTicketQty(evdetails[j].ID, deductedQuota, tx, ctx)
 						//err := tx.Model(evdetails).Where("id = ?", evdetails[j].ID).Update("ticket_quota", deductedQuota).Error

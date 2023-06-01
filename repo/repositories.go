@@ -26,7 +26,7 @@ type BookRepository interface {
 	UpdTicketQty(id uint, quota uint, tx *gorm.DB, ctx context.Context) error
 }
 type PurchaseRepository interface {
-	SavePurchase(event models.PurchasedTicket) error
+	SavePurchase(event models.PurchasedTicket, ctx context.Context) error
 }
 
 type AllRepository interface {
