@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"gorm.io/gorm"
+	"log"
 	"os"
 	"strconv"
 	"ticket-expert/models"
@@ -64,4 +65,55 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Co
 	})
 
 	return err
+}
+
+func (repo *Implementation) CheckBookingPeriod(ctx context.Context) {
+	log.Println("Scheduler start")
+	bookingRetention := 10
+	var bookList []*models.BookingTicket
+	joinQ := "LEFT JOIN purchased_tickets ON booking_tickets.id = purchased_tickets.booking_ticket_id"
+	whereQ := "booking_status = ? AND purchased_tickets.id IS NULL AND CAST(EXTRACT(EPOCH FROM (NOW() - \"booking_tickets\".\"created_at\")) /60 as INTEGER) > ?"
+	err := repo.db.WithContext(ctx).Preload("BookingDetails").Joins(joinQ).Where(whereQ, "active", bookingRetention).Find(&bookList).Error
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	retEventQuota := make(map[uint]uint)
+	var eventIds []uint
+	if bookList != nil {
+		for i := 0; i < len(bookList); i++ {
+			bookList[i].BookingStatus = "expired"
+
+			for j := 0; j < len(bookList[i].BookingDetails); j++ {
+				tempDetail := bookList[i].BookingDetails[j]
+
+				val, found := retEventQuota[tempDetail.EventDetailID]
+				if !found {
+					val = 0
+					eventIds = append(eventIds, tempDetail.EventDetailID)
+				}
+				retEventQuota[tempDetail.EventDetailID] = val + tempDetail.Qty
+			}
+		}
+		eventDetails, err := repo.FindEventDetailsByIds(eventIds, context.TODO())
+		if err != nil {
+			return
+		}
+
+		for i := 0; i < len(eventDetails); i++ {
+			eventDetails[i].TicketQuota += retEventQuota[eventDetails[i].ID]
+		}
+
+		if err2 := repo.db.Save(eventDetails).Error; err2 != nil {
+			log.Println(err2)
+			return
+		}
+
+		if err2 := repo.db.Save(bookList).Error; err2 != nil {
+			log.Println(err2)
+			return
+		}
+	}
+
 }

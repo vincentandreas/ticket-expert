@@ -19,11 +19,13 @@ type EventRepository interface {
 	SaveEvent(event models.Event, ctx context.Context) error
 	FindEventByCondition(location string, category string, ctx context.Context) ([]models.Qres, error)
 	FindByEventId(id string, ctx context.Context) (models.Event, error)
+	FindEventDetailsByIds(ids []uint, ctx context.Context) ([]*models.EventDetail, error)
 }
 
 type BookRepository interface {
 	SaveBooking(event models.BookingTicket, ctx context.Context) error
 	UpdTicketQty(id uint, quota uint, tx *gorm.DB, ctx context.Context) error
+	CheckBookingPeriod(ctx context.Context)
 }
 type PurchaseRepository interface {
 	SavePurchase(event models.PurchasedTicket, ctx context.Context) error

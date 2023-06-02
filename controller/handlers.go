@@ -26,6 +26,7 @@ func HandleRequests(h *BaseHandler) *mux.Router {
 	router.HandleFunc("/api/event", h.HandleSearchEvent).Methods("GET")
 	router.HandleFunc("/api/event/{id}", h.HandleSearchEventById).Methods("GET")
 	router.HandleFunc("/api/book", h.HandleSaveBooking).Methods("POST")
+	router.HandleFunc("/api/book/check", h.HandleCheckBookingPeriod).Methods("GET")
 	router.HandleFunc("/api/purchase", h.HandleSavePurchased).Methods("POST")
 	router.HandleFunc("/api/health", h.CheckHealth).Methods("GET")
 	return router
@@ -94,6 +95,7 @@ func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) 
 	if !isValidRequest(w, reqObj) {
 		return
 	}
+
 	err := h.Repo.SaveBooking(reqObj, r.Context())
 	if err != nil {
 		log.Println(err)
@@ -130,6 +132,12 @@ func (h *BaseHandler) HandleSearchEventById(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	utilities.WriteSuccessWithDataResp(w, res)
+}
+
+func (h *BaseHandler) HandleCheckBookingPeriod(w http.ResponseWriter, r *http.Request) {
+	h.Repo.CheckBookingPeriod(r.Context())
+
+	utilities.WriteSuccessWithDataResp(w, nil)
 }
 
 func (h *BaseHandler) HandleSearchEvent(w http.ResponseWriter, r *http.Request) {

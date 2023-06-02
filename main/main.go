@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"log"
 	"net/http"
 	"os"
@@ -32,9 +31,7 @@ func dbSetup() (*gorm.DB, error) {
 	conn, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  dbParams,
 		PreferSimpleProtocol: true,
-	}), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-	})
+	}), &gorm.Config{})
 	return conn, err
 }
 func main() {
@@ -45,9 +42,12 @@ func main() {
 	doMigration(db)
 
 	implementObj := repo.NewImplementation(db)
-
+	//if err := gocron.Every(15).Second().Do(implementObj.CheckBookingPeriod, context.TODO()); err != nil {
+	//	panic(err)
+	//	return
+	//}
+	//<-gocron.Start()
 	h := controller.NewBaseHandler(implementObj)
-
 	log.Fatal(http.ListenAndServe(":10000", controller.HandleRequests(h)))
 
 }

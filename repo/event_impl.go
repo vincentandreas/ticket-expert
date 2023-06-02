@@ -27,3 +27,10 @@ func (repo *Implementation) FindByEventId(id string, ctx context.Context) (model
 	//result := repo.db.Find()
 	return events, result.Error
 }
+
+func (repo *Implementation) FindEventDetailsByIds(ids []uint, ctx context.Context) ([]*models.EventDetail, error) {
+	var eventDetails []*models.EventDetail
+	result := repo.db.WithContext(ctx).Where("id IN ?", ids).Find(&eventDetails)
+	//result := repo.db.Find()
+	return eventDetails, result.Error
+}
