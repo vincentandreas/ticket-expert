@@ -35,7 +35,7 @@ func TestFindUser(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 
-	implObj := NewImplementation(db)
+	implObj := NewImplementation(db, nil)
 	timenow := time.Time{}
 	users := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "deleted_at", "full_name", "user_name", "password"}).
 		AddRow(1, timenow, timenow, timenow, "user", "user", "passwd")
@@ -54,7 +54,7 @@ func TestFindUser(t *testing.T) {
 func TestAddUser(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
-	implObj := NewImplementation(db)
+	implObj := NewImplementation(db, nil)
 
 	expectedSQL := "INSERT INTO \"users\" (.+) VALUES (.+)"
 	mock.ExpectBegin()

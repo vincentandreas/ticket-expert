@@ -12,7 +12,7 @@ func TestImplementation_FindEventByCondition(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 
-	implObj := NewImplementation(db)
+	implObj := NewImplementation(db, nil)
 	evRes := sqlmock.NewRows([]string{"id", "dummy_detail"}).
 		AddRow(1, "user")
 
@@ -26,7 +26,7 @@ func TestImplementation_FindEventById(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 
-	implObj := NewImplementation(db)
+	implObj := NewImplementation(db, nil)
 	evRes := sqlmock.NewRows([]string{"id", "dummy_detail"}).
 		AddRow(1, "user")
 
@@ -41,7 +41,7 @@ func TestImplementation_FindEventById(t *testing.T) {
 func TestImplementation_SaveEvent(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
-	implObj := NewImplementation(db)
+	implObj := NewImplementation(db, nil)
 
 	eventSql := "INSERT INTO \"events\" (.+) VALUES (.+)"
 	eventDtlSql := "INSERT INTO \"event_details\" (.+) VALUES (.+)"

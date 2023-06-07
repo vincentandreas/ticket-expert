@@ -12,7 +12,7 @@ func TestImplementation_SavePurchase_shouldSuccess(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 
-	implObj := NewImplementation(db)
+	implObj := NewImplementation(db, nil)
 	purchaseSql := "SELECT .+ FROM \"purchased_tickets\""
 	bookingSql := "SELECT .+ FROM \"booking_tickets\""
 	insertPurchaseSQL := "INSERT INTO \"purchased_tickets\""
@@ -35,7 +35,7 @@ func TestImplementation_SavePurchase_shouldFailed_whenBookingExp(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 
-	implObj := NewImplementation(db)
+	implObj := NewImplementation(db, nil)
 	purchaseSql := "SELECT .+ FROM \"purchased_tickets\""
 	bookingSql := "SELECT .+ FROM \"booking_tickets\""
 	//insertPurchaseSQL := "INSERT INTO \"purchased_tickets\""
@@ -58,7 +58,7 @@ func TestImplementation_SavePurchase_shouldFailed_whenAlreadyPurchased(t *testin
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 
-	implObj := NewImplementation(db)
+	implObj := NewImplementation(db, nil)
 	purchaseSql := "SELECT .+ FROM \"purchased_tickets\""
 	bookingSql := "SELECT .+ FROM \"booking_tickets\""
 	//insertPurchaseSQL := "INSERT INTO \"purchased_tickets\""

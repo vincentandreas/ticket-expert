@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
@@ -8,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"ticket-expert/models"
 	"ticket-expert/repo"
 	"ticket-expert/utilities"
@@ -29,6 +31,9 @@ func HandleRequests(h *BaseHandler) *mux.Router {
 	router.HandleFunc("/api/book/check", h.HandleCheckBookingPeriod).Methods("GET")
 	router.HandleFunc("/api/purchase", h.HandleSavePurchased).Methods("POST")
 	router.HandleFunc("/api/health", h.CheckHealth).Methods("GET")
+	router.HandleFunc("/api/waitingQueue", h.HandleSaveWaitingQueue).Methods("POST")
+	router.HandleFunc("/api/testing/{id}", h.TempHandleTest).Methods("GET")
+	router.HandleFunc("/api/checkOrderRoom/{eventId}", h.HandleCheckOrderRoom).Methods("GET")
 	return router
 }
 
@@ -36,6 +41,22 @@ func NewBaseHandler(repo repo.AllRepository) *BaseHandler {
 	return &BaseHandler{
 		Repo: repo,
 	}
+}
+
+func (h *BaseHandler) TempHandleTest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+	idstr := vars["id"]
+
+	h.Repo.SaveUserInOrderRoom(3, "3", "z12", context.TODO())
+	h.Repo.SaveUserInOrderRoom(3, "7", "z12", context.TODO())
+	if idstr == "yes" {
+		h.Repo.PopUserInOrderRoom(3, 3, context.TODO())
+		h.Repo.PopUserInOrderRoom(3, 7, context.TODO())
+	}
+
+	utilities.WriteSuccessResp(w)
 }
 
 func (h *BaseHandler) CheckHealth(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +76,35 @@ func (h *BaseHandler) HandleSaveUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.Repo.SaveUser(userRequest, r.Context())
+	utilities.WriteSuccessResp(w)
+}
+
+func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var userRequest models.NewWaitingUser
+	json.Unmarshal(reqBody, &userRequest)
+
+	if !isValidRequest(w, userRequest) {
+		return
+	}
+	checkRes := h.Repo.GetUserInOrderRoom(userRequest.UserId, userRequest.EventId, r.Context())
+	if checkRes != "" {
+		utilities.WriteErrorResp(w, 400, "User already in order room")
+		return
+	}
+	h.Repo.SaveWaitingQueue(userRequest, r.Context())
+	utilities.WriteSuccessResp(w)
+}
+
+func (h *BaseHandler) HandleSaveUserInOrderRoom(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var userRequest models.NewWaitingUser
+	json.Unmarshal(reqBody, &userRequest)
+
+	if !isValidRequest(w, userRequest) {
+		return
+	}
+	h.Repo.SaveWaitingQueue(userRequest, r.Context())
 	utilities.WriteSuccessResp(w)
 }
 
@@ -119,6 +169,18 @@ func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request
 		utilities.WriteErrorResp(w, 403, "Failed to save data")
 		return
 	}
+	utilities.WriteSuccessResp(w)
+}
+
+func (h *BaseHandler) HandleCheckOrderRoom(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idstr := vars["eventId"]
+	numb, err := strconv.ParseUint(idstr, 10, 32)
+	if err != nil {
+		return
+	}
+	h.Repo.CheckOrderRoom(uint(numb), r.Context())
+
 	utilities.WriteSuccessResp(w)
 }
 

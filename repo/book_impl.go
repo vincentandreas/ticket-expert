@@ -27,7 +27,7 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Co
 		grandTotal += total
 		bookDetails[i].SubTotal = strconv.FormatFloat(total, 'f', -1, 64)
 	}
-	admEnv := os.Getenv("ADMIN_FEE")
+	admEnv := os.Getenv("admin_fee")
 	admFee, _ := strconv.ParseFloat(admEnv, 64)
 	grandTotal += admFee
 	req.TotalPrice = strconv.FormatFloat(grandTotal, 'f', -1, 64)

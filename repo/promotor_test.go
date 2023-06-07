@@ -11,7 +11,7 @@ import (
 func TestAddPromotor(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
-	implObj := NewImplementation(db)
+	implObj := NewImplementation(db, nil)
 
 	expectedSQL := "INSERT INTO \"promotors\" (.+) VALUES (.+)"
 	mock.ExpectBegin()

@@ -19,7 +19,7 @@ func TestImplementation_UpdTicketQty(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 
-	implObj := NewImplementation(db)
+	implObj := NewImplementation(db, nil)
 
 	//kk := "UPDATE \"event_details\" SET .+"
 	mock.ExpectBegin()
@@ -36,8 +36,8 @@ func TestImplementation_SaveBooking_shouldSuccess(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 
-	implObj := NewImplementation(db)
-	os.Setenv("ADMIN_FEE", "2000")
+	implObj := NewImplementation(db, nil)
+	os.Setenv("admin_fee", "2000")
 	evRes := sqlmock.NewRows([]string{"id", "deleted_at"}).
 		AddRow(1, nil)
 	evDetRes := sqlmock.NewRows([]string{"id", "event_id", "ticket_quota", "deleted_at"}).
@@ -66,8 +66,8 @@ func TestImplementation_SaveBooking_shouldFail_whenQuotaNotEnough(t *testing.T) 
 	sqlDB, db, mock := DbMock(t)
 	defer sqlDB.Close()
 
-	implObj := NewImplementation(db)
-	os.Setenv("ADMIN_FEE", "2000")
+	implObj := NewImplementation(db, nil)
+	os.Setenv("admin_fee", "2000")
 	evRes := sqlmock.NewRows([]string{"id", "deleted_at"}).
 		AddRow(1, nil)
 	evDetRes := sqlmock.NewRows([]string{"id", "event_id", "ticket_quota", "deleted_at"}).

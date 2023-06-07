@@ -31,10 +31,20 @@ type PurchaseRepository interface {
 	SavePurchase(event models.PurchasedTicket, ctx context.Context) error
 }
 
+type WaitingRepository interface {
+	SaveWaitingQueue(wuser models.NewWaitingUser, ctx context.Context)
+	PopWaitingQueue(eventId uint, ctx context.Context) string
+	SaveUserInOrderRoom(eventId uint, userIdStr string, qUniqueCode string, ctx context.Context)
+	PopUserInOrderRoom(userId uint, eventId uint, ctx context.Context)
+	CheckOrderRoom(eventId uint, ctx context.Context)
+	GetUserInOrderRoom(userId uint, eventId uint, ctx context.Context) string
+}
+
 type AllRepository interface {
 	UserRepository
 	PromotorRepository
 	EventRepository
 	BookRepository
 	PurchaseRepository
+	WaitingRepository
 }

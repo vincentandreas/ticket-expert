@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
@@ -22,7 +23,7 @@ func doMigration(db *gorm.DB) {
 	db.AutoMigrate(&models.BookingDetail{})
 }
 
-func dbSetup() (*gorm.DB, error) {
+func dbSetup() (*gorm.DB, *redis.Client, error) {
 	username := os.Getenv("postgres_username")
 	password := os.Getenv("postgres_password")
 	dbName := os.Getenv("postgres_dbname")
@@ -32,16 +33,22 @@ func dbSetup() (*gorm.DB, error) {
 		DSN:                  dbParams,
 		PreferSimpleProtocol: true,
 	}), &gorm.Config{})
-	return conn, err
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("redis_host"),
+		Password: os.Getenv("redis_passwd"),
+		DB:       0,
+	})
+	return conn, redisClient, err
 }
 func main() {
-	db, err := dbSetup()
+	db, redis, err := dbSetup()
 	if err != nil {
 		panic(err)
 	}
 	doMigration(db)
 
-	implementObj := repo.NewImplementation(db)
+	implementObj := repo.NewImplementation(db, redis)
 	//if err := gocron.Every(15).Second().Do(implementObj.CheckBookingPeriod, context.TODO()); err != nil {
 	//	panic(err)
 	//	return
