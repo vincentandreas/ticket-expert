@@ -35,7 +35,7 @@ func (repo *Implementation) PopWaitingQueue(eventId uint, ctx context.Context) s
 
 func (repo *Implementation) SaveUserInOrderRoom(eventId uint, userIdStr string, qUniqueCode string, ctx context.Context) {
 	timeNow := time.Now()
-	eventIdStr := "Event" + strconv.FormatInt(int64(eventId), 10)
+	eventIdStr := genEventStr(eventId)
 
 	datas := make(map[string]string)
 	datas["time"] = timeNow.String()
@@ -50,7 +50,6 @@ func (repo *Implementation) SaveUserInOrderRoom(eventId uint, userIdStr string, 
 }
 
 func (repo *Implementation) GetUserInOrderRoom(userId uint, eventId uint, ctx context.Context) string {
-	//orderPeriod := time.Duration(10) * time.Minute
 	eventIdStr := genEventStr(eventId)
 	userIdStr := strconv.FormatInt(int64(userId), 10)
 	result, err := repo.redis.HGet(ctx, eventIdStr, userIdStr).Result()
@@ -68,14 +67,15 @@ func (repo *Implementation) PopUserInOrderRoom(userId uint, eventId uint, ctx co
 	userIdStr := strconv.FormatInt(int64(userId), 10)
 	result, err := repo.redis.HDel(ctx, eventIdStr, userIdStr).Result()
 	if err != nil {
+		log.Println(err)
 		return
 	}
-	fmt.Println(result)
-	fmt.Println("->>>>")
+	log.Println("Finish pop user data")
+	log.Println(result)
 }
 
 func genEventStr(eventId uint) string {
-	eventIdStr := "Event" + strconv.FormatInt(int64(eventId), 10)
+	eventIdStr := "ORmEvent" + strconv.FormatInt(int64(eventId), 10)
 	return eventIdStr
 }
 

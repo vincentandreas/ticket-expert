@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"gorm.io/gorm"
 	"log"
@@ -19,6 +20,10 @@ func (repo *Implementation) UpdTicketQty(id uint, quota uint, tx *gorm.DB, ctx c
 func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Context) error {
 	var grandTotal float64 = 0
 	bookDetails := req.BookingDetails
+
+	if !repo.isValidUniqueId(req, ctx) {
+		return errors.New("Failed, Queue Unique Id Not Match")
+	}
 
 	for i := 0; i < len(bookDetails); i++ {
 		price, _ := strconv.ParseFloat(bookDetails[i].Price, 64)
@@ -64,7 +69,24 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Co
 		return nil
 	})
 
+	repo.PopUserInOrderRoom(req.UserID, req.EventID, ctx)
+
 	return err
+}
+
+func (repo *Implementation) isValidUniqueId(req models.BookingTicket, ctx context.Context) bool {
+	orderRes := repo.GetUserInOrderRoom(req.UserID, req.EventID, ctx)
+	if orderRes == "" {
+		log.Println("User not found in Order Room")
+		return false
+	}
+	datas := make(map[string]string)
+	json.Unmarshal([]byte(orderRes), &datas)
+	if datas["queueUniqueCode"] != req.QueueUniqueCode {
+		log.Println("Unique code different")
+		return false
+	}
+	return true
 }
 
 func (repo *Implementation) CheckBookingPeriod(ctx context.Context) {

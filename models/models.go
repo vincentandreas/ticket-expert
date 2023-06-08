@@ -68,6 +68,7 @@ type BookingTicket struct {
 	BookingDetails  []*BookingDetail `json:"booking_details" validate:"min=1,dive"`
 	PurchasedTicket *PurchasedTicket `validate:"omitempty"`
 	BookingStatus   string           `json:"booking_status" gorm:"not null"`
+	QueueUniqueCode string           `json:"queue_unique_code" validate:"required"`
 	EventID         uint             `json:"event_id" validate:"required"`
 }
 

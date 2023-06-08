@@ -87,6 +87,19 @@ func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Requ
 	if !isValidRequest(w, userRequest) {
 		return
 	}
+
+	//check user
+	_, err := h.Repo.FindUserById(userRequest.UserId, r.Context())
+	if err != nil {
+		log.Println(err)
+		if err.Error() == "record not found" {
+			utilities.WriteErrorResp(w, 400, "User not found")
+			return
+		}
+		utilities.WriteErrorResp(w, 400, "Error when search the user. ")
+		return
+	}
+
 	checkRes := h.Repo.GetUserInOrderRoom(userRequest.UserId, userRequest.EventId, r.Context())
 	if checkRes != "" {
 		utilities.WriteErrorResp(w, 400, "User already in order room")
@@ -131,7 +144,7 @@ func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
 	err := h.Repo.SaveEvent(reqObj, r.Context())
 	if err != nil {
 		log.Println(err)
-		utilities.WriteErrorResp(w, 403, "Failed to save data")
+		utilities.WriteErrorResp(w, 403, err.Error())
 		return
 	}
 	utilities.WriteSuccessResp(w)
@@ -149,7 +162,7 @@ func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) 
 	err := h.Repo.SaveBooking(reqObj, r.Context())
 	if err != nil {
 		log.Println(err)
-		utilities.WriteErrorResp(w, 403, "Failed to save data")
+		utilities.WriteErrorResp(w, 403, err.Error())
 		return
 	}
 	utilities.WriteSuccessResp(w)
@@ -166,7 +179,7 @@ func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request
 	err := h.Repo.SavePurchase(reqObj, r.Context())
 	if err != nil {
 		log.Println(err)
-		utilities.WriteErrorResp(w, 403, "Failed to save data")
+		utilities.WriteErrorResp(w, 403, err.Error())
 		return
 	}
 	utilities.WriteSuccessResp(w)
