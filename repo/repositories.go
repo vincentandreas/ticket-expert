@@ -18,7 +18,7 @@ type PromotorRepository interface {
 
 type EventRepository interface {
 	SaveEvent(event models.Event, ctx context.Context) error
-	FindEventByCondition(location string, category string, ctx context.Context) ([]models.Qres, error)
+	FindEventByCondition(eventName string, location string, category string, ctx context.Context) ([]models.Qres, error)
 	FindByEventId(id string, ctx context.Context) (models.Event, error)
 	FindEventDetailsByIds(ids []uint, ctx context.Context) ([]*models.EventDetail, error)
 }

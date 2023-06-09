@@ -10,13 +10,13 @@ func (repo *Implementation) SaveEvent(event models.Event, ctx context.Context) e
 	return result.Error
 }
 
-func (repo *Implementation) FindEventByCondition(location string, category string, ctx context.Context) ([]models.Qres, error) {
+func (repo *Implementation) FindEventByCondition(eventName string, location string, category string, ctx context.Context) ([]models.Qres, error) {
 
 	var allres []models.Qres
 	selectQ := "events.id, events.event_name, events.event_category, events.event_location, promotors.promotor_name, events.promotor_id"
 	joinQ := "LEFT JOIN promotors on events.promotor_id = promotors.id"
-	whereQ := "event_location LIKE ? AND event_category LIKE ?"
-	result := repo.db.Model(models.Event{}).Select(selectQ).Joins(joinQ).Where(whereQ, "%"+location+"%", "%"+category+"%").Scan(&allres)
+	whereQ := "event_name LIKE ? AND event_location LIKE ? AND event_category LIKE ?"
+	result := repo.db.Model(models.Event{}).Select(selectQ).Joins(joinQ).Where(whereQ, "%"+eventName+"%", "%"+location+"%", "%"+category+"%").Scan(&allres)
 
 	return allres, result.Error
 }

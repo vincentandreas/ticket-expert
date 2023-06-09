@@ -13,7 +13,7 @@ type Promotor struct {
 type User struct {
 	gorm.Model
 	FullName         string `json:"full_name" validate:"required" gorm:"not null"`
-	UserName         string `json:"user_name" validate:"required" gorm:"not null"`
+	UserName         string `json:"user_name" validate:"required" gorm:"not null,index:usernameIdx,unique"`
 	Password         string `json:"password" validate:"required" gorm:"not null"`
 	BookingTickets   []BookingTicket
 	PurchasedTickets []PurchasedTicket
