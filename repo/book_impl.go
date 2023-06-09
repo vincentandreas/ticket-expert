@@ -82,7 +82,7 @@ func (repo *Implementation) isValidUniqueId(req models.BookingTicket, ctx contex
 	}
 	datas := make(map[string]string)
 	json.Unmarshal([]byte(orderRes), &datas)
-	if datas["queueUniqueCode"] != req.QueueUniqueCode {
+	if datas["qUniqueCode"] != req.QUniqueCode {
 		log.Println("Unique code different")
 		return false
 	}

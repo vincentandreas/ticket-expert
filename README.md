@@ -1,14 +1,16 @@
 Ticket Expert
 Under Construction...
 
+Simulate buy ticket. Using Redis to manage the waiting queue. 
 
-Save user in order room
+Feature:
+- Waiting queue
 Website will periodically get their queue status, once other people already finish in order room, the API will notify user, with this response
 resp:
 ```json
 {
   "userId":"001",
-  "queueUniqueCode":"xxx"
+  "qUniqueCode":"xxx"
 }
 ```
 
@@ -18,7 +20,7 @@ Resp
 {
     "user_id": 1,
     "event_id": 2,
-    "queueUniqueCode":"xxx",
+    "qUniqueCode":"xxx",
     "booking_status": "active",
     "booking_details": [
         {

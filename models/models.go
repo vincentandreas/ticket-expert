@@ -19,6 +19,11 @@ type User struct {
 	PurchasedTickets []PurchasedTicket
 }
 
+type UserLogin struct {
+	UserName string `json:"user_name" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
 type ApiResponse struct {
 	Result   string `json:"result"`
 	RespCode string `json:"response_code"`
@@ -26,7 +31,7 @@ type ApiResponse struct {
 }
 
 type ApiGetResponse struct {
-	Result   interface{} `json:"result"`
+	Data     interface{} `json:"data"`
 	RespCode string      `json:"response_code"`
 	RespMsg  string      `json:"response_message"`
 }
@@ -68,7 +73,7 @@ type BookingTicket struct {
 	BookingDetails  []*BookingDetail `json:"booking_details" validate:"min=1,dive"`
 	PurchasedTicket *PurchasedTicket `validate:"omitempty"`
 	BookingStatus   string           `json:"booking_status" gorm:"not null"`
-	QueueUniqueCode string           `json:"queue_unique_code" validate:"required"`
+	QUniqueCode     string           `json:"q_unique_code" validate:"required"`
 	EventID         uint             `json:"event_id" validate:"required"`
 }
 

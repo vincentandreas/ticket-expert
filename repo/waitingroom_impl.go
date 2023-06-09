@@ -13,12 +13,11 @@ import (
 func (repo *Implementation) SaveWaitingQueue(wuser models.NewWaitingUser, ctx context.Context) {
 	key := genQueueEventStr(wuser.EventId)
 	wuserJson, _ := json.Marshal(wuser)
-	result, err := repo.redis.LPush(ctx, key, wuserJson).Result()
+	_, err := repo.redis.LPush(ctx, key, wuserJson).Result()
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	fmt.Println(result)
 }
 
 func (repo *Implementation) PopWaitingQueue(eventId uint, ctx context.Context) string {
@@ -29,7 +28,7 @@ func (repo *Implementation) PopWaitingQueue(eventId uint, ctx context.Context) s
 		return ""
 	}
 	fmt.Println("--------")
-	fmt.Println(result)
+
 	return result
 }
 
@@ -39,14 +38,12 @@ func (repo *Implementation) SaveUserInOrderRoom(eventId uint, userIdStr string, 
 
 	datas := make(map[string]string)
 	datas["time"] = timeNow.String()
-	datas["queueUniqueCode"] = qUniqueCode
+	datas["qUniqueCode"] = qUniqueCode
 	encData, _ := json.Marshal(datas)
-	result, err := repo.redis.HSet(ctx, eventIdStr, userIdStr, encData).Result()
+	_, err := repo.redis.HSet(ctx, eventIdStr, userIdStr, encData).Result()
 	if err != nil {
 		return
 	}
-	fmt.Println(result)
-	fmt.Println("->>>>")
 }
 
 func (repo *Implementation) GetUserInOrderRoom(userId uint, eventId uint, ctx context.Context) string {
@@ -57,8 +54,6 @@ func (repo *Implementation) GetUserInOrderRoom(userId uint, eventId uint, ctx co
 		log.Println(err)
 		return ""
 	}
-	fmt.Println(result)
-	fmt.Println("->>>>")
 	return result
 }
 

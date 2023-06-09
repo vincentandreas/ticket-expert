@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/jcuga/golongpoll"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,12 +19,16 @@ import (
 )
 
 type BaseHandler struct {
-	Repo repo.AllRepository
+	Repo      repo.AllRepository
+	LPManager *golongpoll.LongpollManager
+	Store     *sessions.CookieStore
 }
 
-func HandleRequests(h *BaseHandler) *mux.Router {
+func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/api/user", h.HandleSaveUser).Methods("POST")
+	router.HandleFunc("/api/user/login", h.HandleLogin).Methods("POST")
+	router.HandleFunc("/api/user/checkSession", h.HandleCheckSession).Methods("POST")
 	router.HandleFunc("/api/promotor", h.HandleSavePromotor).Methods("POST")
 	//router.HandleFunc("/api/promotor/{id}", h.HandleSavePromotor).Methods("GET")
 	router.HandleFunc("/api/event", h.HandleSaveEvent).Methods("POST")
@@ -34,12 +41,15 @@ func HandleRequests(h *BaseHandler) *mux.Router {
 	router.HandleFunc("/api/waitingQueue", h.HandleSaveWaitingQueue).Methods("POST")
 	router.HandleFunc("/api/testing/{id}", h.TempHandleTest).Methods("GET")
 	router.HandleFunc("/api/checkOrderRoom/{eventId}", h.HandleCheckOrderRoom).Methods("GET")
+	router.HandleFunc("/api/subQueue", lp.SubscriptionHandler).Methods("GET")
 	return router
 }
 
-func NewBaseHandler(repo repo.AllRepository) *BaseHandler {
+func NewBaseHandler(repo repo.AllRepository, lpMngr *golongpoll.LongpollManager, store *sessions.CookieStore) *BaseHandler {
 	return &BaseHandler{
-		Repo: repo,
+		Repo:      repo,
+		LPManager: lpMngr,
+		Store:     store,
 	}
 }
 
@@ -67,6 +77,47 @@ func (h *BaseHandler) CheckHealth(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(temp)
 }
 
+func (h *BaseHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var userRequest models.UserLogin
+	json.Unmarshal(reqBody, &userRequest)
+
+	if !isValidRequest(w, userRequest) {
+		return
+	}
+	logResult := h.Repo.Login(userRequest, r.Context())
+	if !logResult {
+		utilities.WriteErrorResp(w, 401, "Failed login")
+	}
+	session, err := h.Store.New(r, "te-session")
+	if err != nil {
+		log.Println(err)
+	}
+	session.Values["user_name"] = userRequest.UserName
+
+	err = session.Save(r, w)
+	if err != nil {
+		log.Println(err)
+	}
+	utilities.WriteSuccessResp(w)
+}
+
+func (h *BaseHandler) HandleCheckSession(w http.ResponseWriter, r *http.Request) {
+	session, err := h.Store.Get(r, "te-session")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	msg := ""
+	if username, ok := session.Values["user_name"].(string); ok {
+		msg = "Welcome, " + username
+	} else {
+		msg = "Session invalid"
+	}
+	log.Println(msg)
+	utilities.WriteSuccessResp(w)
+}
+
 func (h *BaseHandler) HandleSaveUser(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var userRequest models.User
@@ -87,7 +138,7 @@ func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Requ
 	if !isValidRequest(w, userRequest) {
 		return
 	}
-
+	//todo there's still no validation in queue length.
 	//check user
 	_, err := h.Repo.FindUserById(userRequest.UserId, r.Context())
 	if err != nil {
@@ -96,7 +147,7 @@ func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Requ
 			utilities.WriteErrorResp(w, 400, "User not found")
 			return
 		}
-		utilities.WriteErrorResp(w, 400, "Error when search the user. ")
+		utilities.WriteErrorResp(w, 400, "Error when search the user")
 		return
 	}
 
@@ -105,8 +156,12 @@ func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Requ
 		utilities.WriteErrorResp(w, 400, "User already in order room")
 		return
 	}
+
+	//add unique id
+	userRequest.QUniqueCode = uuid.New().String()
+
 	h.Repo.SaveWaitingQueue(userRequest, r.Context())
-	utilities.WriteSuccessResp(w)
+	utilities.WriteSuccessWithDataResp(w, userRequest)
 }
 
 func (h *BaseHandler) HandleSaveUserInOrderRoom(w http.ResponseWriter, r *http.Request) {
@@ -192,7 +247,14 @@ func (h *BaseHandler) HandleCheckOrderRoom(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return
 	}
-	h.Repo.CheckOrderRoom(uint(numb), r.Context())
+	qUniqueCodes := h.Repo.CheckOrderRoom(uint(numb), r.Context())
+
+	if qUniqueCodes != nil {
+		for i := 0; i < len(qUniqueCodes); i++ {
+			log.Printf("Allowed queue code %s enter the order room", qUniqueCodes[i])
+			h.LPManager.Publish(qUniqueCodes[i], "enter room")
+		}
+	}
 
 	utilities.WriteSuccessResp(w)
 }
@@ -211,7 +273,6 @@ func (h *BaseHandler) HandleSearchEventById(w http.ResponseWriter, r *http.Reque
 
 func (h *BaseHandler) HandleCheckBookingPeriod(w http.ResponseWriter, r *http.Request) {
 	h.Repo.CheckBookingPeriod(r.Context())
-
 	utilities.WriteSuccessWithDataResp(w, nil)
 }
 

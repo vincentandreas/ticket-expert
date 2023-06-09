@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/sessions"
+	"github.com/jcuga/golongpoll"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -12,6 +14,12 @@ import (
 	"ticket-expert/models"
 	"ticket-expert/repo"
 )
+
+var store *sessions.CookieStore
+
+func init() {
+	store = sessions.NewCookieStore([]byte("your-secret-key"))
+}
 
 func doMigration(db *gorm.DB) {
 	db.AutoMigrate(&models.Promotor{})
@@ -41,6 +49,7 @@ func dbSetup() (*gorm.DB, *redis.Client, error) {
 	})
 	return conn, redisClient, err
 }
+
 func main() {
 	db, redis, err := dbSetup()
 	if err != nil {
@@ -48,13 +57,19 @@ func main() {
 	}
 	doMigration(db)
 
+	lpMngr, err := golongpoll.StartLongpoll(golongpoll.Options{
+		LoggingEnabled:                 true,
+		DeleteEventAfterFirstRetrieval: true,
+	})
+
 	implementObj := repo.NewImplementation(db, redis)
 	//if err := gocron.Every(15).Second().Do(implementObj.CheckBookingPeriod, context.TODO()); err != nil {
 	//	panic(err)
 	//	return
 	//}
 	//<-gocron.Start()
-	h := controller.NewBaseHandler(implementObj)
-	log.Fatal(http.ListenAndServe(":10000", controller.HandleRequests(h)))
+	h := controller.NewBaseHandler(implementObj, lpMngr, store)
+
+	log.Fatal(http.ListenAndServe(":10000", controller.HandleRequests(h, lpMngr)))
 
 }

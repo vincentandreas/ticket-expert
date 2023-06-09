@@ -9,6 +9,7 @@ import (
 type UserRepository interface {
 	SaveUser(user models.User, ctx context.Context)
 	FindUserById(id uint, ctx context.Context) (*models.User, error)
+	Login(req models.UserLogin, ctx context.Context) bool
 }
 
 type PromotorRepository interface {
@@ -36,7 +37,7 @@ type WaitingRepository interface {
 	PopWaitingQueue(eventId uint, ctx context.Context) string
 	SaveUserInOrderRoom(eventId uint, userIdStr string, qUniqueCode string, ctx context.Context)
 	PopUserInOrderRoom(userId uint, eventId uint, ctx context.Context)
-	CheckOrderRoom(eventId uint, ctx context.Context)
+	CheckOrderRoom(eventId uint, ctx context.Context) []string
 	GetUserInOrderRoom(userId uint, eventId uint, ctx context.Context) string
 }
 
