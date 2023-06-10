@@ -29,6 +29,13 @@ func WriteSuccessResp(w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(temp)
 }
 
+func WriteUnauthResp(w http.ResponseWriter) {
+	setAllHeaders(w)
+	w.WriteHeader(http.StatusUnauthorized)
+	temp := models.ApiResponse{"", "01", "Unauthorized"}
+	json.NewEncoder(w).Encode(temp)
+}
+
 func WriteSuccessWithDataResp(w http.ResponseWriter, data interface{}) {
 	setAllHeaders(w)
 
@@ -39,7 +46,8 @@ func WriteSuccessWithDataResp(w http.ResponseWriter, data interface{}) {
 
 func setAllHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.Header().Set("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 }

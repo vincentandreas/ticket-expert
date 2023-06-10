@@ -28,7 +28,6 @@ func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router 
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/api/user", h.HandleSaveUser).Methods("POST")
 	router.HandleFunc("/api/user/login", h.HandleLogin).Methods("POST")
-	router.HandleFunc("/api/user/checkSession", h.HandleCheckSession).Methods("POST")
 	router.HandleFunc("/api/promotor", h.HandleSavePromotor).Methods("POST")
 	//router.HandleFunc("/api/promotor/{id}", h.HandleSavePromotor).Methods("GET")
 	router.HandleFunc("/api/event", h.HandleSaveEvent).Methods("POST")
@@ -85,8 +84,9 @@ func (h *BaseHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	if !isValidRequest(w, userRequest) {
 		return
 	}
-	logResult := h.Repo.Login(userRequest, r.Context())
-	if !logResult {
+	loggedUserId, err := h.Repo.Login(userRequest, r.Context())
+
+	if err != nil {
 		utilities.WriteErrorResp(w, 401, "Failed login")
 	}
 	session, err := h.Store.New(r, "te-session")
@@ -94,6 +94,7 @@ func (h *BaseHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 	session.Values["user_name"] = userRequest.UserName
+	session.Values["user_id"] = loggedUserId
 
 	err = session.Save(r, w)
 	if err != nil {
@@ -102,20 +103,19 @@ func (h *BaseHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	utilities.WriteSuccessResp(w)
 }
 
-func (h *BaseHandler) HandleCheckSession(w http.ResponseWriter, r *http.Request) {
+// return userId, if session invalid, will return ""
+func (h *BaseHandler) SessionGetUserId(r *http.Request) uint {
 	session, err := h.Store.Get(r, "te-session")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return 0
 	}
-	msg := ""
-	if username, ok := session.Values["user_name"].(string); ok {
-		msg = "Welcome, " + username
+	var userId uint
+	if uid, ok := session.Values["user_id"].(uint); ok {
+		userId = uid
 	} else {
-		msg = "Session invalid"
+		userId = 0
 	}
-	log.Println(msg)
-	utilities.WriteSuccessResp(w)
+	return userId
 }
 
 func (h *BaseHandler) HandleSaveUser(w http.ResponseWriter, r *http.Request) {
@@ -131,6 +131,12 @@ func (h *BaseHandler) HandleSaveUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var userRequest models.NewWaitingUser
 	json.Unmarshal(reqBody, &userRequest)
@@ -165,6 +171,12 @@ func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *BaseHandler) HandleSaveUserInOrderRoom(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var userRequest models.NewWaitingUser
 	json.Unmarshal(reqBody, &userRequest)
@@ -177,6 +189,12 @@ func (h *BaseHandler) HandleSaveUserInOrderRoom(w http.ResponseWriter, r *http.R
 }
 
 func (h *BaseHandler) HandleSavePromotor(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var reqObj models.Promotor
 	json.Unmarshal(reqBody, &reqObj)
@@ -189,6 +207,12 @@ func (h *BaseHandler) HandleSavePromotor(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var reqObj models.Event
 	json.Unmarshal(reqBody, &reqObj)
@@ -206,6 +230,12 @@ func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var reqObj models.BookingTicket
 	json.Unmarshal(reqBody, &reqObj)
@@ -224,6 +254,12 @@ func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var reqObj models.PurchasedTicket
 	json.Unmarshal(reqBody, &reqObj)
@@ -241,6 +277,12 @@ func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request
 }
 
 func (h *BaseHandler) HandleCheckOrderRoom(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
 	vars := mux.Vars(r)
 	idstr := vars["eventId"]
 	numb, err := strconv.ParseUint(idstr, 10, 32)
@@ -260,6 +302,12 @@ func (h *BaseHandler) HandleCheckOrderRoom(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *BaseHandler) HandleSearchEventById(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
 	vars := mux.Vars(r)
 	idstr := vars["id"]
 	res, err := h.Repo.FindByEventId(idstr, r.Context())
@@ -277,6 +325,12 @@ func (h *BaseHandler) HandleCheckBookingPeriod(w http.ResponseWriter, r *http.Re
 }
 
 func (h *BaseHandler) HandleSearchEvent(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
 	qparams := r.URL.Query()
 	city := qparams.Get("city")
 	category := qparams.Get("category")

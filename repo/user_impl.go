@@ -17,14 +17,14 @@ func (repo *Implementation) FindUserById(id uint, ctx context.Context) (*models.
 	return user, err
 }
 
-func (repo *Implementation) Login(req models.UserLogin, ctx context.Context) bool {
+func (repo *Implementation) Login(req models.UserLogin, ctx context.Context) (uint, error) {
 	var user *models.User
 	hashPasswd := utilities.HashParams(req.Password)
 	err := repo.db.WithContext(ctx).Where("user_name = ? AND password = ?", req.UserName, hashPasswd).First(&user).Error
 
 	if err != nil || user == nil {
-		return false
+		return 0, err
 	}
 
-	return true
+	return user.ID, nil
 }

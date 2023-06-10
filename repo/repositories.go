@@ -9,7 +9,7 @@ import (
 type UserRepository interface {
 	SaveUser(user models.User, ctx context.Context)
 	FindUserById(id uint, ctx context.Context) (*models.User, error)
-	Login(req models.UserLogin, ctx context.Context) bool
+	Login(req models.UserLogin, ctx context.Context) (uint, error)
 }
 
 type PromotorRepository interface {
