@@ -21,6 +21,7 @@ type EventRepository interface {
 	FindEventByCondition(eventName string, location string, category string, ctx context.Context) ([]models.Qres, error)
 	FindByEventId(id string, ctx context.Context) (models.Event, error)
 	FindEventDetailsByIds(ids []uint, ctx context.Context) ([]*models.EventDetail, error)
+	FindEvDetailPrice(evDetailIds []uint, ctx context.Context) (map[uint]string, error)
 }
 
 type BookRepository interface {

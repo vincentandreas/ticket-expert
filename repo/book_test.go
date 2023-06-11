@@ -32,9 +32,38 @@ func TestImplementation_UpdTicketQty(t *testing.T) {
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
 
+func TestImplementation_SaveBooking_failed_when_quid_notvalid(t *testing.T) {
+	sqlDB, db, mock := DbMock(t)
+	defer func() {
+		sqlDB.Close()
+		validateQUniqueId = isValidUniqueId
+	}()
+
+	validateQUniqueId = func(repo *Implementation, req models.BookingTicket, ctx context.Context) bool {
+		return false
+	}
+
+	implObj := NewImplementation(db, nil)
+
+	var reqBook models.BookingTicket
+	reqBook.EventID = 1
+	reqBook.BookingDetails = genBookDetail()
+	err := implObj.SaveBooking(reqBook, context.TODO())
+	assert.Equal(t, err.Error(), "Failed, Queue Unique Id Not Match")
+	assert.Nil(t, mock.ExpectationsWereMet())
+}
+
 func TestImplementation_SaveBooking_shouldSuccess(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
-	defer sqlDB.Close()
+	defer func() {
+		sqlDB.Close()
+		validateQUniqueId = isValidUniqueId
+	}()
+
+	//mock validate uid
+	validateQUniqueId = func(repo *Implementation, req models.BookingTicket, ctx context.Context) bool {
+		return true
+	}
 
 	implObj := NewImplementation(db, nil)
 	os.Setenv("admin_fee", "2000")

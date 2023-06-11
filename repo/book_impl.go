@@ -17,16 +17,34 @@ func (repo *Implementation) UpdTicketQty(id uint, quota uint, tx *gorm.DB, ctx c
 	return err
 }
 
+var validateQUniqueId = isValidUniqueId
+
 func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Context) error {
 	var grandTotal float64 = 0
 	bookDetails := req.BookingDetails
 
-	if !repo.isValidUniqueId(req, ctx) {
+	if !validateQUniqueId(repo, req, ctx) {
 		return errors.New("Failed, Queue Unique Id Not Match")
+	}
+	var evDetailIds []uint
+	//getting the event detail list
+	for i := 0; i < len(bookDetails); i++ {
+		evDetailIds = append(evDetailIds, bookDetails[i].EventDetailID)
+	}
+
+	priceMap, err := repo.FindEvDetailPrice(evDetailIds, ctx)
+	if err != nil {
+		return err
 	}
 
 	for i := 0; i < len(bookDetails); i++ {
-		price, _ := strconv.ParseFloat(bookDetails[i].Price, 64)
+		ticketPrice, ok := priceMap[bookDetails[i].EventDetailID]
+		// If the key exists
+		if !ok {
+			return errors.New("event detail id not found")
+		}
+
+		price, _ := strconv.ParseFloat(ticketPrice, 64)
 
 		total := price * float64(bookDetails[i].Qty)
 		grandTotal += total
@@ -38,7 +56,7 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Co
 	req.TotalPrice = strconv.FormatFloat(grandTotal, 'f', -1, 64)
 	req.AdminFee = admEnv
 
-	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var evData models.Event
 		tx.Preload("EventDetails").Where("events.id = ?", req.EventID).Find(&evData)
 
@@ -74,7 +92,7 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Co
 	return err
 }
 
-func (repo *Implementation) isValidUniqueId(req models.BookingTicket, ctx context.Context) bool {
+func isValidUniqueId(repo *Implementation, req models.BookingTicket, ctx context.Context) bool {
 	orderRes := repo.GetUserInOrderRoom(req.UserID, req.EventID, ctx)
 	if orderRes == "" {
 		log.Println("User not found in Order Room")

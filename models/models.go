@@ -58,7 +58,7 @@ type EventDetail struct {
 
 type PurchasedTicket struct {
 	gorm.Model
-	UserID          uint   `json:"user_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	UserID          uint   `validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	BookingTicketID uint   `json:"booking_ticket_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	PaymentMethod   string `json:"payment_method" validate:"required"`
 	PaymentStatus   string `json:"payment_status" validate:"required"`
@@ -69,7 +69,7 @@ type BookingTicket struct {
 	gorm.Model
 	TotalPrice      string           `json:"total_price" gorm:"not null"`
 	AdminFee        string           `json:"admin_fee" gorm:"not null"`
-	UserID          uint             `json:"user_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	UserID          uint             `validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	BookingDetails  []*BookingDetail `json:"booking_details" validate:"min=1,dive"`
 	PurchasedTicket *PurchasedTicket `validate:"omitempty"`
 	BookingStatus   string           `json:"booking_status" gorm:"not null"`
@@ -81,7 +81,7 @@ type BookingDetail struct {
 	gorm.Model
 	EventDetailID   uint   `json:"event_detail_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	Qty             uint   `json:"qty" validate:"required" gorm:"not null"`
-	Price           string `json:"price" validate:"required" gorm:"not null"`
+	Price           string `gorm:"not null"`
 	SubTotal        string `gorm:"not null"`
 	BookingTicketID uint   `json:"booking_ticket_id" gorm:"not null"`
 }

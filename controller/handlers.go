@@ -140,7 +140,7 @@ func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Requ
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var userRequest models.NewWaitingUser
 	json.Unmarshal(reqBody, &userRequest)
-
+	userRequest.UserId = sessUserId
 	if !isValidRequest(w, userRequest) {
 		return
 	}
@@ -240,6 +240,8 @@ func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) 
 	var reqObj models.BookingTicket
 	json.Unmarshal(reqBody, &reqObj)
 
+	reqObj.UserID = sessUserId
+	reqObj.BookingStatus = "active"
 	if !isValidRequest(w, reqObj) {
 		return
 	}
@@ -264,6 +266,7 @@ func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request
 	var reqObj models.PurchasedTicket
 	json.Unmarshal(reqBody, &reqObj)
 
+	reqObj.UserID = sessUserId
 	if !isValidRequest(w, reqObj) {
 		return
 	}
@@ -277,12 +280,6 @@ func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request
 }
 
 func (h *BaseHandler) HandleCheckOrderRoom(w http.ResponseWriter, r *http.Request) {
-	sessUserId := h.SessionGetUserId(r)
-	if sessUserId == 0 {
-		utilities.WriteUnauthResp(w)
-		return
-	}
-
 	vars := mux.Vars(r)
 	idstr := vars["eventId"]
 	numb, err := strconv.ParseUint(idstr, 10, 32)

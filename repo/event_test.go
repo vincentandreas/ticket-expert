@@ -18,7 +18,7 @@ func TestImplementation_FindEventByCondition(t *testing.T) {
 
 	evSQL := "SELECT .+ FROM \"events\" LEFT JOIN promotors on events.promotor_id = promotors.id WHERE (.+)"
 	mock.ExpectQuery(evSQL).WillReturnRows(evRes)
-	_, err := implObj.FindEventByCondition("jakarta", "music", context.TODO())
+	_, err := implObj.FindEventByCondition("sfd", "jakarta", "music", context.TODO())
 	assert.Nil(t, err)
 }
 

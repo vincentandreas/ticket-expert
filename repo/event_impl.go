@@ -28,6 +28,21 @@ func (repo *Implementation) FindByEventId(id string, ctx context.Context) (model
 	return events, result.Error
 }
 
+func (repo *Implementation) FindEvDetailPrice(evDetailIds []uint, ctx context.Context) (map[uint]string, error) {
+	var events []models.EventDetail
+	selCol := "id, ticket_price"
+	result := repo.db.WithContext(ctx).Select(selCol).Where("id IN ?", evDetailIds).Find(&events)
+
+	evPrice := make(map[uint]string)
+
+	if events != nil {
+		for i := 0; i < len(events); i++ {
+			evPrice[events[i].ID] = events[i].TicketPrice
+		}
+	}
+	return evPrice, result.Error
+}
+
 func (repo *Implementation) FindEventDetailsByIds(ids []uint, ctx context.Context) ([]*models.EventDetail, error) {
 	var eventDetails []*models.EventDetail
 	result := repo.db.WithContext(ctx).Where("id IN ?", ids).Find(&eventDetails)
