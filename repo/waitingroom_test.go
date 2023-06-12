@@ -12,7 +12,7 @@ func TestImplementation_SaveWaitingQueue(t *testing.T) {
 	db, mock := redismock.NewClientMock()
 	implObj := NewImplementation(nil, db)
 	var wuser models.NewWaitingUser
-	mock.Regexp().ExpectLPush("wqueue", `.+`).RedisNil()
+	mock.Regexp().ExpectLPush("QEvent1", `.+`).RedisNil()
 	wuser.EventId = 1
 	implObj.SaveWaitingQueue(wuser, context.TODO())
 

@@ -43,7 +43,7 @@ func (repo *Implementation) FindEvDetailPrice(evDetailIds []uint, ctx context.Co
 	return evPrice, result.Error
 }
 
-func (repo *Implementation) FindEventDetailsByIds(ids []uint, ctx context.Context) ([]*models.EventDetail, error) {
+func FindEventDetailsByIds(repo *Implementation, ids []uint, ctx context.Context) ([]*models.EventDetail, error) {
 	var eventDetails []*models.EventDetail
 	result := repo.db.WithContext(ctx).Where("id IN ?", ids).Find(&eventDetails)
 	//result := repo.db.Find()

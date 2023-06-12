@@ -57,7 +57,7 @@ func (repo *Implementation) GetUserInOrderRoom(userId uint, eventId uint, ctx co
 	return result
 }
 
-func (repo *Implementation) PopUserInOrderRoom(userId uint, eventId uint, ctx context.Context) {
+func PopUserInOrderRoom(repo *Implementation, userId uint, eventId uint, ctx context.Context) {
 	eventIdStr := genEventStr(eventId)
 	userIdStr := strconv.FormatInt(int64(userId), 10)
 	result, err := repo.redis.HDel(ctx, eventIdStr, userIdStr).Result()

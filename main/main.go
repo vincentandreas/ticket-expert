@@ -63,7 +63,7 @@ func main() {
 	})
 
 	implementObj := repo.NewImplementation(db, redis)
-	//if err := gocron.Every(15).Second().Do(implementObj.CheckBookingPeriod, context.TODO()); err != nil {
+	//if err := gocron.Every(15).Second().Do(implementObj.CheckBookingPeriodically, context.TODO()); err != nil {
 	//	panic(err)
 	//	return
 	//}

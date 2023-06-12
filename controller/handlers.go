@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
@@ -38,7 +37,7 @@ func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router 
 	router.HandleFunc("/api/purchase", h.HandleSavePurchased).Methods("POST")
 	router.HandleFunc("/api/health", h.CheckHealth).Methods("GET")
 	router.HandleFunc("/api/waitingQueue", h.HandleSaveWaitingQueue).Methods("POST")
-	router.HandleFunc("/api/testing/{id}", h.TempHandleTest).Methods("GET")
+	//router.HandleFunc("/api/testing/{id}", h.TempHandleTest).Methods("GET")
 	router.HandleFunc("/api/checkOrderRoom/{eventId}", h.HandleCheckOrderRoom).Methods("GET")
 	router.HandleFunc("/api/subQueue", lp.SubscriptionHandler).Methods("GET")
 	return router
@@ -52,21 +51,21 @@ func NewBaseHandler(repo repo.AllRepository, lpMngr *golongpoll.LongpollManager,
 	}
 }
 
-func (h *BaseHandler) TempHandleTest(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	vars := mux.Vars(r)
-	idstr := vars["id"]
-
-	h.Repo.SaveUserInOrderRoom(3, "3", "z12", context.TODO())
-	h.Repo.SaveUserInOrderRoom(3, "7", "z12", context.TODO())
-	if idstr == "yes" {
-		h.Repo.PopUserInOrderRoom(3, 3, context.TODO())
-		h.Repo.PopUserInOrderRoom(3, 7, context.TODO())
-	}
-
-	utilities.WriteSuccessResp(w)
-}
+//func (h *BaseHandler) TempHandleTest(w http.ResponseWriter, r *http.Request) {
+//	w.Header().Set("Content-Type", "application/json")
+//
+//	vars := mux.Vars(r)
+//	idstr := vars["id"]
+//
+//	h.Repo.SaveUserInOrderRoom(3, "3", "z12", context.TODO())
+//	h.Repo.SaveUserInOrderRoom(3, "7", "z12", context.TODO())
+//	if idstr == "yes" {
+//		h.Repo.PopUserInOrderRoom(3, 3, context.TODO())
+//		h.Repo.PopUserInOrderRoom(3, 7, context.TODO())
+//	}
+//
+//	utilities.WriteSuccessResp(w)
+//}
 
 func (h *BaseHandler) CheckHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -317,7 +316,7 @@ func (h *BaseHandler) HandleSearchEventById(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *BaseHandler) HandleCheckBookingPeriod(w http.ResponseWriter, r *http.Request) {
-	h.Repo.CheckBookingPeriod(r.Context())
+	h.Repo.CheckBookingPeriodically(r.Context())
 	utilities.WriteSuccessWithDataResp(w, nil)
 }
 

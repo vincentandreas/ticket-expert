@@ -18,6 +18,7 @@ func (repo *Implementation) UpdTicketQty(id uint, quota uint, tx *gorm.DB, ctx c
 }
 
 var validateQUniqueId = isValidUniqueId
+var popUserHelper = PopUserInOrderRoom
 
 func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Context) error {
 	var grandTotal float64 = 0
@@ -87,7 +88,7 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Co
 		return nil
 	})
 
-	repo.PopUserInOrderRoom(req.UserID, req.EventID, ctx)
+	popUserHelper(repo, req.UserID, req.EventID, ctx)
 
 	return err
 }
@@ -107,13 +108,13 @@ func isValidUniqueId(repo *Implementation, req models.BookingTicket, ctx context
 	return true
 }
 
-func (repo *Implementation) CheckBookingPeriod(ctx context.Context) {
+var helperGetBooklistExceed = GetBookingExceedRetention
+var helperFindEvDetails = FindEventDetailsByIds
+
+func (repo *Implementation) CheckBookingPeriodically(ctx context.Context) {
 	log.Println("Scheduler start")
 	bookingRetention := 10
-	var bookList []*models.BookingTicket
-	joinQ := "LEFT JOIN purchased_tickets ON booking_tickets.id = purchased_tickets.booking_ticket_id"
-	whereQ := "booking_status = ? AND purchased_tickets.id IS NULL AND CAST(EXTRACT(EPOCH FROM (NOW() - \"booking_tickets\".\"created_at\")) /60 as INTEGER) > ?"
-	err := repo.db.WithContext(ctx).Preload("BookingDetails").Joins(joinQ).Where(whereQ, "active", bookingRetention).Find(&bookList).Error
+	bookList, err := helperGetBooklistExceed(ctx, repo, bookingRetention)
 
 	if err != nil {
 		log.Println(err)
@@ -136,24 +137,37 @@ func (repo *Implementation) CheckBookingPeriod(ctx context.Context) {
 				retEventQuota[tempDetail.EventDetailID] = val + tempDetail.Qty
 			}
 		}
-		eventDetails, err := repo.FindEventDetailsByIds(eventIds, context.TODO())
+		eventDetails, err := helperFindEvDetails(repo, eventIds, context.TODO())
 		if err != nil {
 			return
 		}
 
 		for i := 0; i < len(eventDetails); i++ {
-			eventDetails[i].TicketQuota += retEventQuota[eventDetails[i].ID]
+			eventDetails[i].TicketRemaining += retEventQuota[eventDetails[i].ID]
 		}
 
-		if err2 := repo.db.Save(eventDetails).Error; err2 != nil {
-			log.Println(err2)
-			return
-		}
+		err = repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
-		if err2 := repo.db.Save(bookList).Error; err2 != nil {
-			log.Println(err2)
-			return
-		}
+			if err2 := tx.Save(eventDetails).Error; err2 != nil {
+				log.Println(err2)
+				return err2
+			}
+
+			if err2 := tx.Save(bookList).Error; err2 != nil {
+				log.Println(err2)
+				return err2
+			}
+			return nil
+		})
+		log.Println(err)
 	}
 
+}
+
+func GetBookingExceedRetention(ctx context.Context, repo *Implementation, bookingRetention int) ([]*models.BookingTicket, error) {
+	var bookList []*models.BookingTicket
+	joinQ := "LEFT JOIN purchased_tickets ON booking_tickets.id = purchased_tickets.booking_ticket_id"
+	whereQ := "booking_status = ? AND purchased_tickets.id IS NULL AND CAST(EXTRACT(EPOCH FROM (NOW() - \"booking_tickets\".\"created_at\")) /60 as INTEGER) > ?"
+	err := repo.db.WithContext(ctx).Preload("BookingDetails").Joins(joinQ).Where(whereQ, "active", bookingRetention).Find(&bookList).Error
+	return bookList, err
 }

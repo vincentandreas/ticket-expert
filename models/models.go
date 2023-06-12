@@ -87,7 +87,7 @@ type BookingDetail struct {
 }
 
 type Qres struct {
-	EventID       uint   `json:"event_id"`
+	ID            uint   `json:"event_id"`
 	EventName     string `json:"event_name"`
 	EventCategory string `json:"event_category"`
 	EventLocation string `json:"event_location"`
