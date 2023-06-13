@@ -20,7 +20,7 @@ func (repo *Implementation) SaveWaitingQueue(wuser models.NewWaitingUser, ctx co
 	}
 }
 
-func (repo *Implementation) PopWaitingQueue(eventId uint, ctx context.Context) string {
+func PopWaitingQueue(repo *Implementation, eventId uint, ctx context.Context) string {
 	key := genQueueEventStr(eventId)
 	result, err := repo.redis.RPop(ctx, key).Result()
 	if err != nil {
@@ -32,7 +32,7 @@ func (repo *Implementation) PopWaitingQueue(eventId uint, ctx context.Context) s
 	return result
 }
 
-func (repo *Implementation) SaveUserInOrderRoom(eventId uint, userIdStr string, qUniqueCode string, ctx context.Context) {
+func SaveUserInOrderRoom(repo *Implementation, eventId uint, userIdStr string, qUniqueCode string, ctx context.Context) {
 	timeNow := time.Now()
 	eventIdStr := genEventStr(eventId)
 
@@ -79,7 +79,7 @@ func genQueueEventStr(eventId uint) string {
 	return eventIdStr
 }
 
-func (repo *Implementation) CountPeopleInOrderRoom(eventId uint, ctx context.Context) int64 {
+func CountPeopleInOrderRoom(repo *Implementation, eventId uint, ctx context.Context) int64 {
 	eventIdStr := genEventStr(eventId)
 	result, err := repo.redis.HLen(ctx, eventIdStr).Result()
 	if err != nil {

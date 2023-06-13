@@ -23,7 +23,7 @@ func TestImplementation_PopWaitingQueue(t *testing.T) {
 	db, mock := redismock.NewClientMock()
 	implObj := NewImplementation(nil, db)
 	mock.Regexp().ExpectRPop("QEvent1").RedisNil()
-	implObj.PopWaitingQueue(1, context.TODO())
+	PopWaitingQueue(implObj, 1, context.TODO())
 
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
@@ -33,7 +33,7 @@ func TestImplementation_SaveUserInOrderRoom(t *testing.T) {
 	implObj := NewImplementation(nil, db)
 	mock.Regexp().ExpectHSet("Event1", "1", ".+").RedisNil()
 
-	implObj.SaveUserInOrderRoom(1, "1", "uniquniq", context.TODO())
+	SaveUserInOrderRoom(implObj, 1, "1", "uniquniq", context.TODO())
 
 	assert.Nil(t, mock.ExpectationsWereMet())
 }

@@ -61,3 +61,16 @@ func TestImplementation_SaveEvent(t *testing.T) {
 	implObj.SaveEvent(reqEvent, context.TODO())
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
+
+func TestImplementation_FindEvDetailPrice(t *testing.T) {
+	sqlDB, db, mock := DbMock(t)
+	defer sqlDB.Close()
+	implObj := NewImplementation(db, nil)
+	selRes := sqlmock.NewRows([]string{"id", "ticket_price"}).AddRow(1, "50000")
+	selSql := "SELECT id, ticket_price FROM \"event_details\" WHERE id IN .+"
+
+	mock.ExpectQuery(selSql).WillReturnRows(selRes)
+	var ids []uint
+	implObj.FindEvDetailPrice(ids, context.TODO())
+	assert.Nil(t, mock.ExpectationsWereMet())
+}

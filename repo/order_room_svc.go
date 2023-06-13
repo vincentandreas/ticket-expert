@@ -9,18 +9,20 @@ import (
 )
 
 var concurrentUser = int64(2)
+var helperCountPeople = CountPeopleInOrderRoom
+var helperPopQueue = PopWaitingQueue
+var helperSave = SaveUserInOrderRoom
 
 func (repo *Implementation) CheckOrderRoom(eventId uint, ctx context.Context) []string {
-	currUser := repo.CountPeopleInOrderRoom(eventId, ctx)
-	log.Printf("Curr capacity : %d", currUser)
 	var qUniqueCodes []string
 	for true {
-
+		currUser := helperCountPeople(repo, eventId, ctx)
+		log.Printf("Curr capacity : %d", currUser)
 		if currUser >= concurrentUser {
 			log.Println("Still at max capacity")
 			return qUniqueCodes
 		}
-		nextUserId := repo.PopWaitingQueue(eventId, ctx)
+		nextUserId := helperPopQueue(repo, eventId, ctx)
 		if nextUserId == "" {
 			log.Println("Queue is empty. Nothing added")
 			return qUniqueCodes
@@ -31,7 +33,7 @@ func (repo *Implementation) CheckOrderRoom(eventId uint, ctx context.Context) []
 		log.Printf("moving userId %s to order room", nextUserId)
 
 		qUniqueCodes = append(qUniqueCodes, nextUser.QUniqueCode)
-		repo.SaveUserInOrderRoom(eventId, strconv.Itoa(int(nextUser.UserId)), nextUser.QUniqueCode, ctx)
+		helperSave(repo, eventId, strconv.Itoa(int(nextUser.UserId)), nextUser.QUniqueCode, ctx)
 	}
 	return qUniqueCodes
 }

@@ -34,8 +34,6 @@ type PurchaseRepository interface {
 
 type WaitingRepository interface {
 	SaveWaitingQueue(wuser models.NewWaitingUser, ctx context.Context)
-	PopWaitingQueue(eventId uint, ctx context.Context) string
-	SaveUserInOrderRoom(eventId uint, userIdStr string, qUniqueCode string, ctx context.Context)
 	CheckOrderRoom(eventId uint, ctx context.Context) []string
 	GetUserInOrderRoom(userId uint, eventId uint, ctx context.Context) string
 }

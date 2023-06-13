@@ -16,35 +16,35 @@ func HashParams(input string) string {
 }
 
 func WriteErrorResp(w http.ResponseWriter, httpStatus int, errorMsg string) {
-	setAllHeaders(w)
+	SetAllHeaders(w)
 	w.WriteHeader(httpStatus)
 	temp := models.ApiResponse{"", "01", errorMsg}
 	json.NewEncoder(w).Encode(temp)
 }
 
 func WriteSuccessResp(w http.ResponseWriter) {
-	setAllHeaders(w)
+	SetAllHeaders(w)
 	w.WriteHeader(http.StatusOK)
 	temp := models.ApiResponse{"", "00", "Success"}
 	json.NewEncoder(w).Encode(temp)
 }
 
 func WriteUnauthResp(w http.ResponseWriter) {
-	setAllHeaders(w)
+	SetAllHeaders(w)
 	w.WriteHeader(http.StatusUnauthorized)
 	temp := models.ApiResponse{"", "01", "Unauthorized"}
 	json.NewEncoder(w).Encode(temp)
 }
 
 func WriteSuccessWithDataResp(w http.ResponseWriter, data interface{}) {
-	setAllHeaders(w)
+	SetAllHeaders(w)
 
 	w.WriteHeader(http.StatusOK)
 	temp := models.ApiGetResponse{data, "00", "Success"}
 	json.NewEncoder(w).Encode(temp)
 }
 
-func setAllHeaders(w http.ResponseWriter) {
+func SetAllHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
