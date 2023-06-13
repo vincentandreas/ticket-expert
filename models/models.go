@@ -94,3 +94,12 @@ type Qres struct {
 	PromotorName  string `json:"promotor_name"`
 	PromotorID    uint   `json:"promotor_id"`
 }
+
+type TicketDetails struct {
+	TicketPrice   string `json:"ticket_price"`
+	EventCategory string `json:"event_category"`
+	EventName     string `json:"event_name"`
+	QUniqueCode   string `json:"q_unique_code"`
+	BookingStatus string `json:"booking_status"`
+	TotalPrice    string `json:"total_price"`
+}
