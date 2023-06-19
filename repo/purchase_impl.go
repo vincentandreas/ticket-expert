@@ -22,7 +22,12 @@ func (repo *Implementation) SavePurchase(req models.PurchasedTicket, ctx context
 		if bookingData.PurchasedTicket != nil {
 			return errors.New("this booking already purchased")
 		}
+
 		if err := tx.Create(&req).Error; err != nil {
+			return err
+		}
+		bookingData.BookingStatus = "purchased"
+		if err := tx.Save(&bookingData).Error; err != nil {
 			return err
 		}
 		return nil
@@ -37,14 +42,14 @@ func (repo *Implementation) SavePurchase(req models.PurchasedTicket, ctx context
 //	repo.db.WithContext(ctx).Preload("BookingTickets").Preload("Events")
 //}
 
-func (repo *Implementation) GetTicketDetails(purchasedTicketID uint) (models.TicketDetails, error) {
-	var ticketDetails models.TicketDetails
+func (repo *Implementation) FindPurchasedEventById(purchasedTicketID string) (models.PurchaseDetails, error) {
+	var ticketDetails models.PurchaseDetails
 	var purchasedTicket models.PurchasedTicket
 	var bookingTicket models.BookingTicket
 	var event models.Event
 	var eventDetail models.EventDetail
 
-	if err := repo.db.Preload("BookingTickets").First(&purchasedTicket, purchasedTicketID).Error; err != nil {
+	if err := repo.db.First(&purchasedTicket, purchasedTicketID).Error; err != nil {
 		return ticketDetails, err
 	}
 
@@ -52,13 +57,13 @@ func (repo *Implementation) GetTicketDetails(purchasedTicketID uint) (models.Tic
 		return ticketDetails, err
 	}
 
-	if err := repo.db.Preload("EventDetails").First(&event, bookingTicket.EventID).Error; err != nil {
-		return ticketDetails, err
-	}
-
-	if err := repo.db.First(&eventDetail, "event_id = ?", event.ID).Error; err != nil {
-		return ticketDetails, err
-	}
+	//if err := repo.db.Preload("EventDetails").First(&event, bookingTicket.EventID).Error; err != nil {
+	//	return ticketDetails, err
+	//}
+	//
+	//if err := repo.db.First(&eventDetail, "event_id = ?", event.ID).Error; err != nil {
+	//	return ticketDetails, err
+	//}
 
 	ticketDetails.TicketPrice = eventDetail.TicketPrice
 	ticketDetails.EventCategory = event.EventCategory

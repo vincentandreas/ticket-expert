@@ -204,6 +204,23 @@ func TestImplementation_CheckBookingPeriodically(t *testing.T) {
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
 
+func TestImplementation_FindBookingByUserId(t *testing.T) {
+	sqlDB, db, mock := DbMock(t)
+	defer func() {
+		sqlDB.Close()
+	}()
+	implObj := NewImplementation(db, nil)
+
+	res := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "deleted_at", "total_price", "admin_fee", "user_id", "booking_status", "q_unique_code", "event_id"})
+
+	mock.ExpectQuery("SELECT .+ FROM \"booking_tickets\" LEFT JOIN purchased_tickets ON booking_tickets.id = purchased_tickets.booking_ticket_id WHERE .+").WillReturnRows(res)
+
+	implObj.FindBookingByUserId(1, context.TODO())
+
+	assert.Nil(t, mock.ExpectationsWereMet())
+
+}
+
 func genBookDetail() []*models.BookingDetail {
 	var arrdetail []*models.BookingDetail
 

@@ -33,6 +33,7 @@ func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router 
 	router.HandleFunc("/api/event", h.HandleSearchEvent).Methods("GET")
 	router.HandleFunc("/api/event/{id}", h.HandleSearchEventById).Methods("GET")
 	router.HandleFunc("/api/book", h.HandleSaveBooking).Methods("POST")
+	router.HandleFunc("/api/book", h.HandleFindBookingByUserId).Methods("GET")
 	router.HandleFunc("/api/book/check", h.HandleCheckBookingPeriod).Methods("GET")
 	router.HandleFunc("/api/purchase", h.HandleSavePurchased).Methods("POST")
 	router.HandleFunc("/api/health", h.CheckHealth).Methods("GET")
@@ -41,6 +42,7 @@ func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router 
 	router.HandleFunc("/api/checkOrderRoom/{eventId}", h.HandleCheckOrderRoom).Methods("GET")
 
 	router.HandleFunc("/api/subQueue", h.WrapSubsHandler).Methods("GET")
+	router.HandleFunc("/api/purchase/{id}", h.HandleFindPurchasedEventById).Methods("GET")
 	return router
 }
 
@@ -50,6 +52,34 @@ func NewBaseHandler(repo repo.AllRepository, lpMngr *golongpoll.LongpollManager,
 		LPManager: lpMngr,
 		Store:     store,
 	}
+}
+
+func (h *BaseHandler) HandleFindPurchasedEventById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idstr := vars["id"]
+	ticketDetail, err := h.Repo.FindPurchasedEventById(idstr)
+	if err != nil {
+		log.Println(err.Error())
+		utilities.WriteErrorResp(w, 400, "error")
+		return
+	}
+	utilities.WriteSuccessWithDataResp(w, ticketDetail)
+}
+
+func (h *BaseHandler) HandleFindBookingByUserId(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
+	ticketDetail, err := h.Repo.FindBookingByUserId(sessUserId, r.Context())
+	if err != nil {
+		log.Println(err.Error())
+		utilities.WriteErrorResp(w, 400, err.Error())
+		return
+	}
+	utilities.WriteSuccessWithDataResp(w, ticketDetail)
 }
 
 func (h *BaseHandler) WrapSubsHandler(w http.ResponseWriter, r *http.Request) {

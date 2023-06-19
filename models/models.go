@@ -96,8 +96,18 @@ type Qres struct {
 }
 
 type TicketDetails struct {
+}
+
+type PurchaseDetails struct {
 	TicketPrice   string `json:"ticket_price"`
 	EventCategory string `json:"event_category"`
+	EventName     string `json:"event_name"`
+	QUniqueCode   string `json:"q_unique_code"`
+	BookingStatus string `json:"booking_status"`
+	TotalPrice    string `json:"total_price"`
+}
+
+type ShowBooking struct {
 	EventName     string `json:"event_name"`
 	QUniqueCode   string `json:"q_unique_code"`
 	BookingStatus string `json:"booking_status"`

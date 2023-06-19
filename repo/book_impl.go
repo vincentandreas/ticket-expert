@@ -164,6 +164,14 @@ func (repo *Implementation) CheckBookingPeriodically(ctx context.Context) {
 
 }
 
+func (repo *Implementation) FindBookingByUserId(userId uint, ctx context.Context) ([]*models.ShowBooking, error) {
+	var showBooks []*models.ShowBooking
+	selSql := "events.event_name, booking_tickets.q_unique_code, booking_tickets.booking_status, booking_tickets.total_price"
+	joinSql := "JOIN events ON booking_tickets.event_id = events.id"
+	err := repo.db.WithContext(ctx).Table("booking_tickets").Select(selSql).Joins(joinSql).Where("booking_tickets.user_id = ?", userId).Scan(&showBooks).Error
+	return showBooks, err
+}
+
 func GetBookingExceedRetention(ctx context.Context, repo *Implementation, bookingRetention int) ([]*models.BookingTicket, error) {
 	var bookList []*models.BookingTicket
 	joinQ := "LEFT JOIN purchased_tickets ON booking_tickets.id = purchased_tickets.booking_ticket_id"
