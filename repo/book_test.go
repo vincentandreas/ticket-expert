@@ -142,7 +142,7 @@ func TestImplementation_SaveBooking_shouldFail_whenQuotaNotEnough(t *testing.T) 
 	reqBook.EventID = 1
 	reqBook.BookingDetails = genBookDetail()
 	err := implObj.SaveBooking(reqBook, context.TODO())
-	assert.Equal(t, err.Error(), "ticket quota not enough")
+	assert.Equal(t, err.Error(), "ticket remaining is not enough")
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
 

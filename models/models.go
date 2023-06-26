@@ -13,10 +13,25 @@ type Promotor struct {
 type User struct {
 	gorm.Model
 	FullName         string `json:"full_name" validate:"required" gorm:"not null"`
-	UserName         string `json:"user_name" validate:"required" gorm:"not null,index:usernameIdx,unique"`
+	UserName         string `json:"user_name" validate:"required" gorm:"not null,uniqueIndex"`
 	Password         string `json:"password" validate:"required" gorm:"not null"`
+	PhoneNumber      string `json:"phone_number" validate:"required" gorm:"not null,uniqueIndex"`
 	BookingTickets   []BookingTicket
 	PurchasedTickets []PurchasedTicket
+}
+type OutUser struct {
+	FullName    string `json:"full_name"`
+	UserName    string `json:"user_name"`
+	PhoneNumber string `json:"phone_number"`
+}
+
+func (usr *User) Extract() OutUser {
+	ou := OutUser{
+		FullName:    usr.FullName,
+		UserName:    usr.UserName,
+		PhoneNumber: usr.PhoneNumber,
+	}
+	return ou
 }
 
 type UserLogin struct {
@@ -39,6 +54,7 @@ type ApiGetResponse struct {
 type Event struct {
 	gorm.Model
 	EventName      string         `json:"event_name" validate:"required"  gorm:"not null"`
+	EventDesc      string         `json:"event_desc" validate:"required"`
 	EventCategory  string         `json:"event_category" validate:"required"  gorm:"not null"`
 	EventLocation  string         `json:"event_location" validate:"required"  gorm:"not null"`
 	PromotorID     uint           `json:"promotor_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`

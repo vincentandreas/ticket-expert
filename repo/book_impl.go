@@ -13,7 +13,7 @@ import (
 
 func (repo *Implementation) UpdTicketQty(id uint, quota uint, tx *gorm.DB, ctx context.Context) error {
 	var evdetails models.EventDetail
-	err := tx.WithContext(ctx).Model(evdetails).Where("id = ?", id).Update("ticket_quota", quota).Error
+	err := tx.WithContext(ctx).Model(evdetails).Where("id = ?", id).Update("ticket_remaining", quota).Error
 	return err
 }
 
@@ -66,12 +66,11 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Co
 		for i := 0; i < len(bookDetails); i++ {
 			for j := 0; j < len(evdetails); j++ {
 				if evdetails[j].ID == bookDetails[i].EventDetailID {
-					if evdetails[j].TicketQuota < bookDetails[i].Qty {
-						return errors.New("ticket quota not enough")
+					if evdetails[j].TicketRemaining < bookDetails[i].Qty {
+						return errors.New("ticket remaining is not enough")
 					} else {
-						deductedQuota := evdetails[j].TicketQuota - bookDetails[i].Qty
+						deductedQuota := evdetails[j].TicketRemaining - bookDetails[i].Qty
 						err := repo.UpdTicketQty(evdetails[j].ID, deductedQuota, tx, ctx)
-						//err := tx.Model(evdetails).Where("id = ?", evdetails[j].ID).Update("ticket_quota", deductedQuota).Error
 						if err != nil {
 							return err
 						}

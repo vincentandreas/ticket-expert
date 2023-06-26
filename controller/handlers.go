@@ -26,6 +26,7 @@ type BaseHandler struct {
 func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/api/user", h.HandleSaveUser).Methods("POST")
+	router.HandleFunc("/api/user", h.HandleGetUserData).Methods("GET")
 	router.HandleFunc("/api/user/login", h.HandleLogin).Methods("POST")
 	router.HandleFunc("/api/promotor", h.HandleSavePromotor).Methods("POST")
 	//router.HandleFunc("/api/promotor/{id}", h.HandleSavePromotor).Methods("GET")
@@ -135,6 +136,20 @@ func (h *BaseHandler) SessionGetUserId(r *http.Request) uint {
 		userId = 0
 	}
 	return userId
+}
+
+func (h *BaseHandler) HandleGetUserData(w http.ResponseWriter, r *http.Request) {
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
+	data, err := h.Repo.FindUserById(sessUserId, r.Context())
+	if err != nil {
+		return
+	}
+	utilities.WriteSuccessWithDataResp(w, data.Extract())
 }
 
 func (h *BaseHandler) HandleSaveUser(w http.ResponseWriter, r *http.Request) {

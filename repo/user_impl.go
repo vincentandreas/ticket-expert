@@ -13,7 +13,8 @@ func (repo *Implementation) SaveUser(user models.User, ctx context.Context) {
 
 func (repo *Implementation) FindUserById(id uint, ctx context.Context) (*models.User, error) {
 	var user *models.User
-	err := repo.db.WithContext(ctx).Where("id = ?", id).First(&user).Error
+	selSql := "full_name, user_name, phone_number"
+	err := repo.db.WithContext(ctx).Select(selSql).Where("id = ?", id).First(&user).Error
 	return user, err
 }
 
