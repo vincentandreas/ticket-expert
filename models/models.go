@@ -4,18 +4,14 @@ import (
 	"gorm.io/gorm"
 )
 
-type Promotor struct {
-	gorm.Model
-	PromotorName string `json:"promotor_name" validate:"required"`
-	Events       []Event
-}
-
 type User struct {
 	gorm.Model
 	FullName         string `json:"full_name" validate:"required" gorm:"not null"`
 	UserName         string `json:"user_name" validate:"required" gorm:"not null,uniqueIndex"`
 	Password         string `json:"password" validate:"required" gorm:"not null"`
 	PhoneNumber      string `json:"phone_number" validate:"required" gorm:"not null,uniqueIndex"`
+	Role             string `json:"role" validate:"required,oneof=USER PROMOTOR" `
+	Events           []Event
 	BookingTickets   []BookingTicket
 	PurchasedTickets []PurchasedTicket
 }
@@ -57,7 +53,7 @@ type Event struct {
 	EventDesc      string         `json:"event_desc" validate:"required"`
 	EventCategory  string         `json:"event_category" validate:"required"  gorm:"not null"`
 	EventLocation  string         `json:"event_location" validate:"required"  gorm:"not null"`
-	PromotorID     uint           `json:"promotor_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	UserID         uint           `json:"user_id" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	EventDetails   []*EventDetail `json:"event_details" validate:"min=1,dive"`
 	BookingTickets []BookingTicket
 }
@@ -67,7 +63,7 @@ type EventDetail struct {
 	TicketClass     string `json:"ticket_class" validate:"required"`
 	TicketPrice     string `json:"ticket_price" validate:"required"`
 	TicketQuota     uint   `json:"ticket_quota" validate:"required"`
-	TicketRemaining uint   `json:"ticket_remaining" validate:"required"`
+	TicketRemaining uint   `json:"ticket_remaining"`
 	EventID         uint   `gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	BookingDetail   []*BookingDetail
 }
@@ -107,8 +103,8 @@ type Qres struct {
 	EventName     string `json:"event_name"`
 	EventCategory string `json:"event_category"`
 	EventLocation string `json:"event_location"`
-	PromotorName  string `json:"promotor_name"`
-	PromotorID    uint   `json:"promotor_id"`
+	FullName      string `json:"full_name"`
+	UserID        uint   `json:"user_id"`
 }
 
 type TicketDetails struct {

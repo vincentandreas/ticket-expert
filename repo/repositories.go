@@ -7,13 +7,9 @@ import (
 )
 
 type UserRepository interface {
-	SaveUser(user models.User, ctx context.Context)
+	SaveUser(user models.User, ctx context.Context) error
 	FindUserById(id uint, ctx context.Context) (*models.User, error)
-	Login(req models.UserLogin, ctx context.Context) (uint, error)
-}
-
-type PromotorRepository interface {
-	SavePromotor(promotor models.Promotor, ctx context.Context)
+	Login(req models.UserLogin, ctx context.Context) (*models.User, error)
 }
 
 type EventRepository interface {
@@ -38,11 +34,12 @@ type WaitingRepository interface {
 	SaveWaitingQueue(wuser models.NewWaitingUser, ctx context.Context)
 	CheckOrderRoom(eventId uint, ctx context.Context) []string
 	GetUserInOrderRoom(userId uint, eventId uint, ctx context.Context) string
+	CountTotalPeopleInOrderRoom(eventId uint, ctx context.Context) int64
+	CountTotalPeopleInWaitingRoom(eventId uint, ctx context.Context) int64
 }
 
 type AllRepository interface {
 	UserRepository
-	PromotorRepository
 	EventRepository
 	BookRepository
 	PurchaseRepository

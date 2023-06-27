@@ -28,8 +28,6 @@ func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router 
 	router.HandleFunc("/api/user", h.HandleSaveUser).Methods("POST")
 	router.HandleFunc("/api/user", h.HandleGetUserData).Methods("GET")
 	router.HandleFunc("/api/user/login", h.HandleLogin).Methods("POST")
-	router.HandleFunc("/api/promotor", h.HandleSavePromotor).Methods("POST")
-	//router.HandleFunc("/api/promotor/{id}", h.HandleSavePromotor).Methods("GET")
 	router.HandleFunc("/api/event", h.HandleSaveEvent).Methods("POST")
 	router.HandleFunc("/api/event", h.HandleSearchEvent).Methods("GET")
 	router.HandleFunc("/api/event/{id}", h.HandleSearchEventById).Methods("GET")
@@ -38,9 +36,10 @@ func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router 
 	router.HandleFunc("/api/book/check", h.HandleCheckBookingPeriod).Methods("GET")
 	router.HandleFunc("/api/purchase", h.HandleSavePurchased).Methods("POST")
 	router.HandleFunc("/api/health", h.CheckHealth).Methods("GET")
+	router.HandleFunc("/api/waitingQueue/checkTotal/{eventId}", h.HandleWaitingRoomCheckTotal).Methods("GET")
 	router.HandleFunc("/api/waitingQueue", h.HandleSaveWaitingQueue).Methods("POST")
 	//router.HandleFunc("/api/testing/{id}", h.TempHandleTest).Methods("GET")
-	router.HandleFunc("/api/checkOrderRoom/{eventId}", h.HandleCheckOrderRoom).Methods("GET")
+	router.HandleFunc("/api/orderRoom/checkAvailable/{eventId}", h.HandleCheckOrderRoom).Methods("GET")
 
 	router.HandleFunc("/api/subQueue", h.WrapSubsHandler).Methods("GET")
 	router.HandleFunc("/api/purchase/{id}", h.HandleFindPurchasedEventById).Methods("GET")
@@ -104,23 +103,24 @@ func (h *BaseHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	if !isValidRequest(w, userRequest) {
 		return
 	}
-	loggedUserId, err := h.Repo.Login(userRequest, r.Context())
+	user, err := h.Repo.Login(userRequest, r.Context())
 
 	if err != nil {
 		utilities.WriteErrorResp(w, 401, "Failed login")
+		return
 	}
 	session, err := h.Store.New(r, "te-session")
 	if err != nil {
 		log.Println(err)
 	}
 	session.Values["user_name"] = userRequest.UserName
-	session.Values["user_id"] = loggedUserId
+	session.Values["user_id"] = user.ID
 
 	err = session.Save(r, w)
 	if err != nil {
 		log.Println(err)
 	}
-	utilities.WriteSuccessResp(w)
+	utilities.WriteSuccessWithDataResp(w, user.Role)
 }
 
 // return userId, if session invalid, will return ""
@@ -160,8 +160,21 @@ func (h *BaseHandler) HandleSaveUser(w http.ResponseWriter, r *http.Request) {
 	if !isValidRequest(w, userRequest) {
 		return
 	}
-	h.Repo.SaveUser(userRequest, r.Context())
+	err := h.Repo.SaveUser(userRequest, r.Context())
+	if checkError(w, err) {
+		return
+	}
+
 	utilities.WriteSuccessResp(w)
+}
+
+func checkError(w http.ResponseWriter, err error) bool {
+	if err != nil {
+		utilities.WriteErrorResp(w, 400, "Error when process the request")
+		log.Println(err.Error())
+		return true
+	}
+	return false
 }
 
 func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Request) {
@@ -222,31 +235,24 @@ func (h *BaseHandler) HandleSaveUserInOrderRoom(w http.ResponseWriter, r *http.R
 	utilities.WriteSuccessResp(w)
 }
 
-func (h *BaseHandler) HandleSavePromotor(w http.ResponseWriter, r *http.Request) {
-	sessUserId := h.SessionGetUserId(r)
-	if sessUserId == 0 {
-		utilities.WriteUnauthResp(w)
-		return
-	}
-
-	reqBody, _ := ioutil.ReadAll(r.Body)
-	var reqObj models.Promotor
-	json.Unmarshal(reqBody, &reqObj)
-
-	if !isValidRequest(w, reqObj) {
-		return
-	}
-	h.Repo.SavePromotor(reqObj, r.Context())
-	utilities.WriteSuccessResp(w)
-}
-
 func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
 	sessUserId := h.SessionGetUserId(r)
 	if sessUserId == 0 {
 		utilities.WriteUnauthResp(w)
 		return
 	}
-
+	user, err := h.Repo.FindUserById(sessUserId, r.Context())
+	if err != nil {
+		log.Println(err.Error())
+		utilities.WriteErrorResp(w, 400, "Error when saving events")
+		return
+	}
+	if user.Role != "PROMOTOR" {
+		errDesc := "User role isn't promotor"
+		log.Println(errDesc)
+		utilities.WriteErrorResp(w, 400, errDesc)
+		return
+	}
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var reqObj models.Event
 	json.Unmarshal(reqBody, &reqObj)
@@ -254,7 +260,8 @@ func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
 	if !isValidRequest(w, reqObj) {
 		return
 	}
-	err := h.Repo.SaveEvent(reqObj, r.Context())
+	reqObj.UserID = sessUserId
+	err = h.Repo.SaveEvent(reqObj, r.Context())
 	if err != nil {
 		log.Println(err)
 		utilities.WriteErrorResp(w, 403, err.Error())
@@ -361,7 +368,6 @@ func (h *BaseHandler) HandleSearchEvent(w http.ResponseWriter, r *http.Request) 
 		utilities.WriteUnauthResp(w)
 		return
 	}
-
 	qparams := r.URL.Query()
 	city := qparams.Get("city")
 	category := qparams.Get("category")
@@ -373,6 +379,19 @@ func (h *BaseHandler) HandleSearchEvent(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	utilities.WriteSuccessWithDataResp(w, res)
+}
+
+func (h *BaseHandler) HandleWaitingRoomCheckTotal(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	idstr := vars["eventId"]
+	numb, err := strconv.ParseUint(idstr, 10, 32)
+	if err != nil {
+		utilities.WriteErrorResp(w, 400, err.Error())
+		return
+	}
+	totalPeople := h.Repo.CountTotalPeopleInWaitingRoom(uint(numb), r.Context())
+	utilities.WriteSuccessWithDataResp(w, totalPeople)
 }
 
 func isValidRequest(w http.ResponseWriter, request interface{}) bool {

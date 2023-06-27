@@ -22,7 +22,6 @@ func init() {
 }
 
 func doMigration(db *gorm.DB) {
-	db.AutoMigrate(&models.Promotor{})
 	db.AutoMigrate(&models.User{})
 	db.AutoMigrate(&models.Event{})
 	db.AutoMigrate(&models.EventDetail{})

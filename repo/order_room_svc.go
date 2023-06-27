@@ -13,6 +13,11 @@ var helperCountPeople = CountPeopleInOrderRoom
 var helperPopQueue = PopWaitingQueue
 var helperSave = SaveUserInOrderRoom
 
+func (repo *Implementation) CountTotalPeopleInOrderRoom(eventId uint, ctx context.Context) int64 {
+	total := helperCountPeople(repo, eventId, ctx)
+	return total
+}
+
 func (repo *Implementation) CheckOrderRoom(eventId uint, ctx context.Context) []string {
 	var qUniqueCodes []string
 	for true {

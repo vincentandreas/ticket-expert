@@ -20,6 +20,15 @@ func (repo *Implementation) SaveWaitingQueue(wuser models.NewWaitingUser, ctx co
 	}
 }
 
+func (repo *Implementation) CountTotalPeopleInWaitingRoom(eventId uint, ctx context.Context) int64 {
+	key := genQueueEventStr(eventId)
+	result, err := repo.redis.LLen(ctx, key).Result()
+	if err != nil {
+		return -1
+	}
+	return result
+}
+
 func PopWaitingQueue(repo *Implementation, eventId uint, ctx context.Context) string {
 	key := genQueueEventStr(eventId)
 	result, err := repo.redis.RPop(ctx, key).Result()

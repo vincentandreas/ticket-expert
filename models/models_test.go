@@ -3,17 +3,32 @@ package models
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"testing"
 )
 
 func TestUser_failed_when_fullname_empty(t *testing.T) {
 	req := User{
-		UserName: "qwww",
-		Password: "qwww",
+		UserName:    "qwww",
+		Password:    "qwww",
+		Role:        "PROMOTOR",
+		PhoneNumber: "08120812",
 	}
 
 	validationErr := checkStruct(req)
 	assert.Contains(t, validationErr[0].Error(), "'FullName' failed")
+}
+
+func TestUser_failed_when_role_empty(t *testing.T) {
+	req := User{
+		UserName:    "qwww",
+		Password:    "qwww",
+		FullName:    "vvv",
+		PhoneNumber: "08120812",
+	}
+
+	validationErr := checkStruct(req)
+	assert.Contains(t, validationErr[0].Error(), "'Role' failed")
 }
 
 func checkStruct(req interface{}) validator.ValidationErrors {
@@ -28,11 +43,14 @@ func TestEvent_failed_when_eventdetail_empty(t *testing.T) {
 		EventName:     "qwww",
 		EventCategory: "qwww",
 		EventLocation: "jakarta",
-		PromotorID:    1,
+		EventDesc:     "desc",
+		UserID:        1,
 		EventDetails:  nil,
 	}
 
 	validationErr := checkStruct(req)
+	log.Println("Isi validate Err")
+	log.Println(validationErr)
 	assert.Contains(t, validationErr[0].Error(), "'EventDetails' failed")
 }
 

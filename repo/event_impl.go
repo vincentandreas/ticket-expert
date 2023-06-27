@@ -6,6 +6,10 @@ import (
 )
 
 func (repo *Implementation) SaveEvent(event models.Event, ctx context.Context) error {
+	for i := 0; i < len(event.EventDetails); i++ {
+		event.EventDetails[i].TicketRemaining = event.EventDetails[i].TicketQuota
+	}
+
 	result := repo.db.WithContext(ctx).Create(&event)
 	return result.Error
 }
@@ -13,8 +17,8 @@ func (repo *Implementation) SaveEvent(event models.Event, ctx context.Context) e
 func (repo *Implementation) FindEventByCondition(eventName string, location string, category string, ctx context.Context) ([]models.Qres, error) {
 
 	var allres []models.Qres
-	selectQ := "events.id, events.event_name, events.event_category, events.event_location, promotors.promotor_name, events.promotor_id"
-	joinQ := "LEFT JOIN promotors on events.promotor_id = promotors.id"
+	selectQ := "events.id, events.event_name, events.event_category, events.event_location, users.full_name, events.user_id"
+	joinQ := "LEFT JOIN users on events.user_id = users.id"
 	whereQ := "event_name LIKE ? AND event_location LIKE ? AND event_category LIKE ?"
 	result := repo.db.Model(models.Event{}).Select(selectQ).Joins(joinQ).Where(whereQ, "%"+eventName+"%", "%"+location+"%", "%"+category+"%").Scan(&allres)
 
