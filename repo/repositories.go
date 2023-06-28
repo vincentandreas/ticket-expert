@@ -24,6 +24,7 @@ type BookRepository interface {
 	UpdTicketQty(id uint, quota uint, tx *gorm.DB, ctx context.Context) error
 	CheckBookingPeriodically(ctx context.Context)
 	FindBookingByUserId(userId uint, ctx context.Context) ([]*models.ShowBooking, error)
+	GetBookingByUniqCode(ctx context.Context, uniqCode string) (*models.BookingTicket, error)
 }
 type PurchaseRepository interface {
 	SavePurchase(event models.PurchasedTicket, ctx context.Context) error

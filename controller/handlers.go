@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"ticket-expert/models"
 	"ticket-expert/repo"
+	"ticket-expert/services"
 	"ticket-expert/utilities"
 )
 
@@ -40,7 +41,8 @@ func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router 
 	router.HandleFunc("/api/waitingQueue", h.HandleSaveWaitingQueue).Methods("POST")
 	//router.HandleFunc("/api/testing/{id}", h.TempHandleTest).Methods("GET")
 	router.HandleFunc("/api/orderRoom/checkAvailable/{eventId}", h.HandleCheckOrderRoom).Methods("GET")
-
+	router.HandleFunc("/api/upload", h.UploadHandler).Methods("POST")
+	router.HandleFunc("/api/upload", h.UploadOptHandler).Methods("OPTIONS")
 	router.HandleFunc("/api/subQueue", h.WrapSubsHandler).Methods("GET")
 	router.HandleFunc("/api/purchase/{id}", h.HandleFindPurchasedEventById).Methods("GET")
 	return router
@@ -52,6 +54,34 @@ func NewBaseHandler(repo repo.AllRepository, lpMngr *golongpoll.LongpollManager,
 		LPManager: lpMngr,
 		Store:     store,
 	}
+}
+
+func (h *BaseHandler) UploadOptHandler(w http.ResponseWriter, r *http.Request) {
+	utilities.WriteSuccessResp(w)
+	return
+}
+
+func (h *BaseHandler) UploadHandler(w http.ResponseWriter, r *http.Request) {
+	// Retrieve the uploaded file
+	sessUserId := h.SessionGetUserId(r)
+	if sessUserId == 0 {
+		utilities.WriteUnauthResp(w)
+		return
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Failed to retrieve the file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	photoUrl := services.UploadToBucket(file, handler.Filename)
+	if photoUrl == "" {
+		utilities.WriteErrorResp(w, 400, "failed to upload photo")
+		return
+	}
+	utilities.WriteSuccessWithDataResp(w, photoUrl)
 }
 
 func (h *BaseHandler) HandleFindPurchasedEventById(w http.ResponseWriter, r *http.Request) {
@@ -248,7 +278,7 @@ func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if user.Role != "PROMOTOR" {
-		errDesc := "User role isn't promotor"
+		errDesc := "Only Promotor can add event"
 		log.Println(errDesc)
 		utilities.WriteErrorResp(w, 400, errDesc)
 		return
@@ -297,24 +327,28 @@ func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request) {
-	sessUserId := h.SessionGetUserId(r)
-	if sessUserId == 0 {
-		utilities.WriteUnauthResp(w)
-		return
-	}
-
 	reqBody, _ := ioutil.ReadAll(r.Body)
-	var reqObj models.PurchasedTicket
+	var reqObj models.PurchaseReq
 	json.Unmarshal(reqBody, &reqObj)
 
-	reqObj.UserID = sessUserId
 	if !isValidRequest(w, reqObj) {
 		return
 	}
-	err := h.Repo.SavePurchase(reqObj, r.Context())
-	if err != nil {
-		log.Println(err)
-		utilities.WriteErrorResp(w, 403, err.Error())
+	booking, err := h.Repo.GetBookingByUniqCode(r.Context(), reqObj.BookingUniqCode)
+	if checkError(w, err) {
+		return
+	}
+
+	purchase := models.PurchasedTicket{
+		UserID:          booking.UserID,
+		BookingTicketID: booking.ID,
+		PaymentMethod:   reqObj.PaymentMethod,
+		TransRefNo:      reqObj.TransRefNo,
+		PaymentStatus:   "success",
+	}
+
+	err = h.Repo.SavePurchase(purchase, r.Context())
+	if checkError(w, err) {
 		return
 	}
 	utilities.WriteSuccessResp(w)

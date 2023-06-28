@@ -178,3 +178,9 @@ func GetBookingExceedRetention(ctx context.Context, repo *Implementation, bookin
 	err := repo.db.WithContext(ctx).Preload("BookingDetails").Joins(joinQ).Where(whereQ, "active", bookingRetention).Find(&bookList).Error
 	return bookList, err
 }
+
+func (repo *Implementation) GetBookingByUniqCode(ctx context.Context, uniqCode string) (*models.BookingTicket, error) {
+	var book *models.BookingTicket
+	err := repo.db.WithContext(ctx).Where("q_unique_code = ?", uniqCode).First(&book).Error
+	return book, err
+}

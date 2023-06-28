@@ -54,6 +54,7 @@ type Event struct {
 	EventCategory  string         `json:"event_category" validate:"required"  gorm:"not null"`
 	EventLocation  string         `json:"event_location" validate:"required"  gorm:"not null"`
 	UserID         uint           `json:"user_id" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	EventPhoto     string         `json:"event_photo" validate:"required"`
 	EventDetails   []*EventDetail `json:"event_details" validate:"min=1,dive"`
 	BookingTickets []BookingTicket
 }
@@ -73,6 +74,7 @@ type PurchasedTicket struct {
 	UserID          uint   `validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	BookingTicketID uint   `json:"booking_ticket_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	PaymentMethod   string `json:"payment_method" validate:"required"`
+	TransRefNo      string `json:"trans_ref_no"  validate:"required"`
 	PaymentStatus   string `json:"payment_status" validate:"required"`
 }
 
@@ -124,4 +126,10 @@ type ShowBooking struct {
 	QUniqueCode   string `json:"q_unique_code"`
 	BookingStatus string `json:"booking_status"`
 	TotalPrice    string `json:"total_price"`
+}
+
+type PurchaseReq struct {
+	BookingUniqCode string `json:"booking_uniq_code" validate:"required"`
+	PaymentMethod   string `json:"payment_method" validate:"required"`
+	TransRefNo      string `json:"trans_ref_no"  validate:"required"`
 }
