@@ -15,19 +15,18 @@ func (repo *Implementation) SaveEvent(event models.Event, ctx context.Context) e
 }
 
 func (repo *Implementation) FindEventByCondition(eventName string, location string, category string, ctx context.Context) ([]models.Qres, error) {
-
 	var allres []models.Qres
-	selectQ := "events.id, events.event_name, events.event_category, events.event_location, users.full_name, events.user_id"
+	selectQ := "events.id, events.event_name, events.event_category, events.event_location, events.event_photo, users.full_name, events.user_id"
 	joinQ := "LEFT JOIN users on events.user_id = users.id"
 	whereQ := "event_name LIKE ? AND event_location LIKE ? AND event_category LIKE ?"
-	result := repo.db.Model(models.Event{}).Select(selectQ).Joins(joinQ).Where(whereQ, "%"+eventName+"%", "%"+location+"%", "%"+category+"%").Scan(&allres)
+	result := repo.db.WithContext(ctx).Model(models.Event{}).Select(selectQ).Joins(joinQ).Where(whereQ, "%"+eventName+"%", "%"+location+"%", "%"+category+"%").Scan(&allres)
 
 	return allres, result.Error
 }
 
 func (repo *Implementation) FindByEventId(id string, ctx context.Context) (models.Event, error) {
 	var events models.Event
-	result := repo.db.WithContext(ctx).Preload("EventDetails").Where("id = ?", id).Find(&events)
+	result := repo.db.WithContext(ctx).Preload("EventDetails").Where("id = ?", id).First(&events)
 	//result := repo.db.Find()
 	return events, result.Error
 }

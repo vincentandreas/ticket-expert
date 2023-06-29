@@ -105,6 +105,7 @@ type Qres struct {
 	EventName     string `json:"event_name"`
 	EventCategory string `json:"event_category"`
 	EventLocation string `json:"event_location"`
+	EventPhoto    string `json:"event_photo"`
 	FullName      string `json:"full_name"`
 	UserID        uint   `json:"user_id"`
 }
