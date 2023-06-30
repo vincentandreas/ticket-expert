@@ -111,15 +111,20 @@ type Qres struct {
 }
 
 type TicketDetails struct {
+	Qty         uint   `json:"qty"`
+	Price       string `json:"price"`
+	SubTotal    string `json:"sub_total"`
+	TicketClass string `json:"ticket_class"`
 }
 
 type PurchaseDetails struct {
-	TicketPrice   string `json:"ticket_price"`
-	EventCategory string `json:"event_category"`
-	EventName     string `json:"event_name"`
-	QUniqueCode   string `json:"q_unique_code"`
-	BookingStatus string `json:"booking_status"`
-	TotalPrice    string `json:"total_price"`
+	AdminFee      string          `json:"admin_fee"`
+	EventCategory string          `json:"event_category"`
+	EventName     string          `json:"event_name"`
+	QUniqueCode   string          `json:"q_unique_code"`
+	BookingStatus string          `json:"booking_status"`
+	TotalPrice    string          `json:"total_price"`
+	TicketDetails []TicketDetails `json:"ticket_details"`
 }
 
 type ShowBooking struct {

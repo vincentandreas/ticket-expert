@@ -20,7 +20,7 @@ func (repo *Implementation) SaveWaitingQueue(wuser models.NewWaitingUser, ctx co
 	}
 }
 
-func (repo *Implementation) CountTotalPeopleInWaitingRoom(eventId uint, ctx context.Context) int64 {
+func CountTotalPeopleInWaitingRoom(repo *Implementation, eventId uint, ctx context.Context) int64 {
 	key := genQueueEventStr(eventId)
 	result, err := repo.redis.LLen(ctx, key).Result()
 	if err != nil {
@@ -55,7 +55,7 @@ func SaveUserInOrderRoom(repo *Implementation, eventId uint, userIdStr string, q
 	}
 }
 
-func (repo *Implementation) GetUserInOrderRoom(userId uint, eventId uint, ctx context.Context) string {
+func GetUserInOrderRoom(repo *Implementation, userId uint, eventId uint, ctx context.Context) string {
 	eventIdStr := genEventStr(eventId)
 	userIdStr := strconv.FormatInt(int64(userId), 10)
 	result, err := repo.redis.HGet(ctx, eventIdStr, userIdStr).Result()
@@ -66,16 +66,17 @@ func (repo *Implementation) GetUserInOrderRoom(userId uint, eventId uint, ctx co
 	return result
 }
 
-func PopUserInOrderRoom(repo *Implementation, userId uint, eventId uint, ctx context.Context) {
+func PopUserInOrderRoom(repo *Implementation, userId uint, eventId uint, ctx context.Context) bool {
 	eventIdStr := genEventStr(eventId)
 	userIdStr := strconv.FormatInt(int64(userId), 10)
 	result, err := repo.redis.HDel(ctx, eventIdStr, userIdStr).Result()
 	if err != nil {
 		log.Println(err)
-		return
+		return false
 	}
 	log.Println("Finish pop user data")
 	log.Println(result)
+	return true
 }
 
 func genEventStr(eventId uint) string {

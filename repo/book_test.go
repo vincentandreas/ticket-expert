@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -38,7 +39,7 @@ func TestImplementation_SaveBooking_failed_when_quid_notvalid(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer func() {
 		sqlDB.Close()
-		validateQUniqueId = isValidUniqueId
+		validateQUniqueId = IsValidUniqueId
 	}()
 
 	validateQUniqueId = func(repo *Implementation, req models.BookingTicket, ctx context.Context) bool {
@@ -59,7 +60,7 @@ func TestImplementation_SaveBooking_shouldSuccess(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer func() {
 		sqlDB.Close()
-		validateQUniqueId = isValidUniqueId
+		validateQUniqueId = IsValidUniqueId
 		popUserHelper = PopUserInOrderRoom
 	}()
 
@@ -68,16 +69,17 @@ func TestImplementation_SaveBooking_shouldSuccess(t *testing.T) {
 		return true
 	}
 
-	popUserHelper = func(repo *Implementation, userId uint, eventId uint, ctx context.Context) {
+	popUserHelper = func(repo *Implementation, userId uint, eventId uint, ctx context.Context) bool {
 		log.Println("Mocking pop helper")
+		return true
 	}
 
 	implObj := NewImplementation(db, nil)
 	os.Setenv("admin_fee", "2000")
 	evRes := sqlmock.NewRows([]string{"id", "deleted_at"}).
 		AddRow(1, nil)
-	evDetRes := sqlmock.NewRows([]string{"id", "event_id", "ticket_quota", "deleted_at"}).
-		AddRow(1, 1, 100, nil)
+	evDetRes := sqlmock.NewRows([]string{"id", "event_id", "ticket_quota", "ticket_remaining", "deleted_at"}).
+		AddRow(1, 1, 100, 100, nil)
 	checkPriceRes := sqlmock.NewRows([]string{"id", "ticket_price"}).
 		AddRow(1, "10000")
 	//addRow := sqlmock.NewRows([]string{"id"}).AddRow("1")
@@ -108,7 +110,7 @@ func TestImplementation_SaveBooking_shouldFail_whenQuotaNotEnough(t *testing.T) 
 	sqlDB, db, mock := DbMock(t)
 	defer func() {
 		sqlDB.Close()
-		validateQUniqueId = isValidUniqueId
+		validateQUniqueId = IsValidUniqueId
 		popUserHelper = PopUserInOrderRoom
 
 	}()
@@ -116,8 +118,9 @@ func TestImplementation_SaveBooking_shouldFail_whenQuotaNotEnough(t *testing.T) 
 	validateQUniqueId = func(repo *Implementation, req models.BookingTicket, ctx context.Context) bool {
 		return true
 	}
-	popUserHelper = func(repo *Implementation, userId uint, eventId uint, ctx context.Context) {
+	popUserHelper = func(repo *Implementation, userId uint, eventId uint, ctx context.Context) bool {
 		log.Println("Mocking pop helper")
+		return true
 	}
 
 	implObj := NewImplementation(db, nil)
@@ -213,12 +216,74 @@ func TestImplementation_FindBookingByUserId(t *testing.T) {
 
 	res := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "deleted_at", "total_price", "admin_fee", "user_id", "booking_status", "q_unique_code", "event_id"})
 
-	mock.ExpectQuery("SELECT .+ FROM \"booking_tickets\" LEFT JOIN purchased_tickets ON booking_tickets.id = purchased_tickets.booking_ticket_id WHERE .+").WillReturnRows(res)
-
+	mock.ExpectQuery("SELECT .+ FROM \"booking_tickets\" JOIN events ON booking_tickets.event_id = events.id WHERE .+").WillReturnRows(res)
 	implObj.FindBookingByUserId(1, context.TODO())
-
 	assert.Nil(t, mock.ExpectationsWereMet())
+}
 
+func TestIsValidUniqueId_shouldTrue(t *testing.T) {
+	sqlDB, db, _ := DbMock(t)
+	defer func() {
+		sqlDB.Close()
+	}()
+	implObj := NewImplementation(db, nil)
+
+	helperGetUser = func(repo *Implementation, userId uint, eventId uint, ctx context.Context) string {
+		log.Println("Dummy get user")
+		mck := make(map[string]string)
+		mck["qUniqueCode"] = "123a"
+		mckStr, err := json.Marshal(mck)
+		if err != nil {
+			return ""
+		}
+		return string(mckStr)
+	}
+	bookTick := models.BookingTicket{
+		QUniqueCode: "123a",
+	}
+	res := IsValidUniqueId(implObj, bookTick, context.TODO())
+	assert.True(t, res)
+}
+
+func TestIsValidUniqueId_shouldFalse_whenQDiff(t *testing.T) {
+	sqlDB, db, _ := DbMock(t)
+	defer func() {
+		sqlDB.Close()
+	}()
+	implObj := NewImplementation(db, nil)
+
+	helperGetUser = func(repo *Implementation, userId uint, eventId uint, ctx context.Context) string {
+		log.Println("Dummy get user")
+		mck := make(map[string]string)
+		mck["qUniqueCode"] = "123a"
+		mckStr, err := json.Marshal(mck)
+		if err != nil {
+			return ""
+		}
+		return string(mckStr)
+	}
+	bookTick := models.BookingTicket{
+		QUniqueCode: "888",
+	}
+	res := IsValidUniqueId(implObj, bookTick, context.TODO())
+	assert.False(t, res)
+}
+
+func TestIsValidUniqueId_shouldNotFound(t *testing.T) {
+	sqlDB, db, _ := DbMock(t)
+	defer func() {
+		sqlDB.Close()
+	}()
+	implObj := NewImplementation(db, nil)
+
+	helperGetUser = func(repo *Implementation, userId uint, eventId uint, ctx context.Context) string {
+		return ""
+	}
+	bookTick := models.BookingTicket{
+		QUniqueCode: "123a",
+	}
+	res := IsValidUniqueId(implObj, bookTick, context.TODO())
+	assert.False(t, res)
 }
 
 func genBookDetail() []*models.BookingDetail {

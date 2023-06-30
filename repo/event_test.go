@@ -16,7 +16,7 @@ func TestImplementation_FindEventByCondition(t *testing.T) {
 	evRes := sqlmock.NewRows([]string{"id", "dummy_detail"}).
 		AddRow(1, "user")
 
-	evSQL := "SELECT .+ FROM \"events\" LEFT JOIN promotors on events.promotor_id = promotors.id WHERE (.+)"
+	evSQL := "SELECT .+ FROM \"events\" LEFT JOIN users on events.user_id = users.id WHERE (.+)"
 	mock.ExpectQuery(evSQL).WillReturnRows(evRes)
 	_, err := implObj.FindEventByCondition("sfd", "jakarta", "music", context.TODO())
 	assert.Nil(t, err)
@@ -72,5 +72,19 @@ func TestImplementation_FindEvDetailPrice(t *testing.T) {
 	mock.ExpectQuery(selSql).WillReturnRows(selRes)
 	var ids []uint
 	implObj.FindEvDetailPrice(ids, context.TODO())
+	assert.Nil(t, mock.ExpectationsWereMet())
+}
+
+func Test_FindEventDetailsByIds(t *testing.T) {
+	sqlDB, db, mock := DbMock(t)
+	defer sqlDB.Close()
+	implObj := NewImplementation(db, nil)
+	selRes := sqlmock.NewRows([]string{"id", "ticket_price"}).AddRow(1, "50000")
+	selSql := "SELECT .+ FROM \"event_details\" WHERE id IN .+"
+
+	mock.ExpectQuery(selSql).WillReturnRows(selRes)
+	var ids []uint
+	_, err := FindEventDetailsByIds(implObj, ids, context.TODO())
+	assert.Nil(t, err)
 	assert.Nil(t, mock.ExpectationsWereMet())
 }

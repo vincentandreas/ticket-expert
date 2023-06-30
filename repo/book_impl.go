@@ -17,7 +17,7 @@ func (repo *Implementation) UpdTicketQty(id uint, quota uint, tx *gorm.DB, ctx c
 	return err
 }
 
-var validateQUniqueId = isValidUniqueId
+var validateQUniqueId = IsValidUniqueId
 var popUserHelper = PopUserInOrderRoom
 
 func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Context) error {
@@ -49,6 +49,7 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Co
 
 		total := price * float64(bookDetails[i].Qty)
 		grandTotal += total
+		bookDetails[i].Price = ticketPrice
 		bookDetails[i].SubTotal = strconv.FormatFloat(total, 'f', -1, 64)
 	}
 	admEnv := os.Getenv("admin_fee")
@@ -92,8 +93,10 @@ func (repo *Implementation) SaveBooking(req models.BookingTicket, ctx context.Co
 	return err
 }
 
-func isValidUniqueId(repo *Implementation, req models.BookingTicket, ctx context.Context) bool {
-	orderRes := repo.GetUserInOrderRoom(req.UserID, req.EventID, ctx)
+var helperGetUser = GetUserInOrderRoom
+
+func IsValidUniqueId(repo *Implementation, req models.BookingTicket, ctx context.Context) bool {
+	orderRes := helperGetUser(repo, req.UserID, req.EventID, ctx)
 	if orderRes == "" {
 		log.Println("User not found in Order Room")
 		return false
@@ -183,4 +186,56 @@ func (repo *Implementation) GetBookingByUniqCode(ctx context.Context, uniqCode s
 	var book *models.BookingTicket
 	err := repo.db.WithContext(ctx).Where("q_unique_code = ?", uniqCode).First(&book).Error
 	return book, err
+}
+
+func (repo *Implementation) GetBookingDataByUniqCode(ctx context.Context, uniqCode string) (models.PurchaseDetails, error) {
+	var purchaseDetails models.PurchaseDetails
+	var bookingTicket models.BookingTicket
+	var event models.Event
+	var eventDetails []models.EventDetail
+
+	if err := repo.db.WithContext(ctx).Preload("PurchasedTicket").Preload("BookingDetails").Where("q_unique_code = ?", uniqCode).First(&bookingTicket).Error; err != nil {
+		return purchaseDetails, err
+	}
+
+	if err := repo.db.WithContext(ctx).First(&event, bookingTicket.EventID).Error; err != nil {
+		return purchaseDetails, err
+	}
+
+	var evDetIds []uint
+	var tdetails []models.TicketDetails
+
+	for i := 0; i < len(bookingTicket.BookingDetails); i++ {
+		evDetIds = append(evDetIds, bookingTicket.BookingDetails[i].EventDetailID)
+	}
+
+	if err := repo.db.WithContext(ctx).Where("id in ?", evDetIds).First(&eventDetails).Error; err != nil {
+		return purchaseDetails, err
+	}
+
+	for i := 0; i < len(bookingTicket.BookingDetails); i++ {
+		for j := 0; j < len(eventDetails); j++ {
+			bd := bookingTicket.BookingDetails[i]
+			ed := eventDetails[j]
+			if bd.EventDetailID == ed.ID {
+				tmp := models.TicketDetails{
+					Qty:         bd.Qty,
+					Price:       bd.Price,
+					SubTotal:    bd.SubTotal,
+					TicketClass: ed.TicketClass,
+				}
+				tdetails = append(tdetails, tmp)
+				break
+			}
+		}
+	}
+
+	purchaseDetails.AdminFee = bookingTicket.AdminFee
+	purchaseDetails.EventCategory = event.EventCategory
+	purchaseDetails.EventName = event.EventName
+	purchaseDetails.QUniqueCode = bookingTicket.QUniqueCode
+	purchaseDetails.BookingStatus = bookingTicket.BookingStatus
+	purchaseDetails.TotalPrice = bookingTicket.TotalPrice
+	purchaseDetails.TicketDetails = tdetails
+	return purchaseDetails, nil
 }

@@ -19,7 +19,7 @@ import (
 )
 
 type BaseHandler struct {
-	Repo      repo.AllRepository
+	Repo      *repo.Implementation
 	LPManager *golongpoll.LongpollManager
 	Store     *sessions.CookieStore
 }
@@ -44,11 +44,11 @@ func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router 
 	router.HandleFunc("/api/upload", h.UploadHandler).Methods("POST")
 	router.HandleFunc("/api/upload", h.UploadOptHandler).Methods("OPTIONS")
 	router.HandleFunc("/api/subQueue", h.WrapSubsHandler).Methods("GET")
-	router.HandleFunc("/api/purchase/{id}", h.HandleFindPurchasedEventById).Methods("GET")
+	router.HandleFunc("/api/book/{qUniqueCode}", h.HandleGetBookData).Methods("GET")
 	return router
 }
 
-func NewBaseHandler(repo repo.AllRepository, lpMngr *golongpoll.LongpollManager, store *sessions.CookieStore) *BaseHandler {
+func NewBaseHandler(repo *repo.Implementation, lpMngr *golongpoll.LongpollManager, store *sessions.CookieStore) *BaseHandler {
 	return &BaseHandler{
 		Repo:      repo,
 		LPManager: lpMngr,
@@ -84,10 +84,10 @@ func (h *BaseHandler) UploadHandler(w http.ResponseWriter, r *http.Request) {
 	utilities.WriteSuccessWithDataResp(w, photoUrl)
 }
 
-func (h *BaseHandler) HandleFindPurchasedEventById(w http.ResponseWriter, r *http.Request) {
+func (h *BaseHandler) HandleGetBookData(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	idstr := vars["id"]
-	ticketDetail, err := h.Repo.FindPurchasedEventById(idstr)
+	qUniqCode := vars["qUniqueCode"]
+	ticketDetail, err := h.Repo.GetBookingDataByUniqCode(r.Context(), qUniqCode)
 	if err != nil {
 		log.Println(err.Error())
 		utilities.WriteErrorResp(w, 400, "error")
@@ -234,7 +234,7 @@ func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	checkRes := h.Repo.GetUserInOrderRoom(userRequest.UserId, userRequest.EventId, r.Context())
+	checkRes := repo.GetUserInOrderRoom(h.Repo, userRequest.UserId, userRequest.EventId, r.Context())
 	if checkRes != "" {
 		utilities.WriteErrorResp(w, 400, "User already in order room")
 		return
@@ -424,7 +424,7 @@ func (h *BaseHandler) HandleWaitingRoomCheckTotal(w http.ResponseWriter, r *http
 		utilities.WriteErrorResp(w, 400, err.Error())
 		return
 	}
-	totalPeople := h.Repo.CountTotalPeopleInWaitingRoom(uint(numb), r.Context())
+	totalPeople := repo.CountTotalPeopleInWaitingRoom(h.Repo, uint(numb), r.Context())
 	utilities.WriteSuccessWithDataResp(w, totalPeople)
 }
 

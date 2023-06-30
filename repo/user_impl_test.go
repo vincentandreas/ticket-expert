@@ -65,3 +65,41 @@ func TestAddUser(t *testing.T) {
 	implObj.SaveUser(reqUser, context.TODO())
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
+
+func TestImplementation_Login_shouldScs(t *testing.T) {
+	sqlDB, db, mock := DbMock(t)
+	defer sqlDB.Close()
+	implObj := NewImplementation(db, nil)
+	timenow := time.Time{}
+
+	userRes := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "deleted_at", "full_name", "user_name", "password"}).
+		AddRow(1, timenow, timenow, timenow, "user", "user", "passwd")
+
+	expectedSQL := "SELECT (.+) FROM \"users\" WHERE .+"
+	mock.ExpectQuery(expectedSQL).WillReturnRows(userRes)
+
+	userObj := models.UserLogin{
+		UserName: "user",
+		Password: "passwd",
+	}
+	_, err := implObj.Login(userObj, context.TODO())
+	assert.Nil(t, err)
+}
+
+func TestImplementation_Login_shouldFalse(t *testing.T) {
+	sqlDB, db, mock := DbMock(t)
+	defer sqlDB.Close()
+	implObj := NewImplementation(db, nil)
+
+	userRes := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "deleted_at", "full_name", "user_name", "password"})
+
+	expectedSQL := "SELECT (.+) FROM \"users\" WHERE .+"
+	mock.ExpectQuery(expectedSQL).WillReturnRows(userRes)
+
+	userObj := models.UserLogin{
+		UserName: "user",
+		Password: "passwd",
+	}
+	_, err := implObj.Login(userObj, context.TODO())
+	assert.Equal(t, err.Error(), "record not found")
+}

@@ -34,7 +34,7 @@ type PurchaseRepository interface {
 type WaitingRepository interface {
 	SaveWaitingQueue(wuser models.NewWaitingUser, ctx context.Context)
 	CheckOrderRoom(eventId uint, ctx context.Context) []string
-	GetUserInOrderRoom(userId uint, eventId uint, ctx context.Context) string
+	//GetUserInOrderRoom(userId uint, eventId uint, ctx context.Context) string
 	CountTotalPeopleInOrderRoom(eventId uint, ctx context.Context) int64
 	CountTotalPeopleInWaitingRoom(eventId uint, ctx context.Context) int64
 }
