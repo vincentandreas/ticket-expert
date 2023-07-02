@@ -285,6 +285,86 @@ func TestIsValidUniqueId_shouldNotFound(t *testing.T) {
 	res := IsValidUniqueId(implObj, bookTick, context.TODO())
 	assert.False(t, res)
 }
+func TestImplementation_GetBookingByUniqCode_shouldFound(t *testing.T) {
+	sqlDB, db, mock := DbMock(t)
+	defer sqlDB.Close()
+
+	implObj := NewImplementation(db, nil)
+	selBooksql := "SELECT .+ FROM \"booking_tickets\" WHERE q_unique_code = .+"
+	bookRes := sqlmock.NewRows([]string{"id"}).AddRow(1)
+	mock.ExpectQuery(selBooksql).WillReturnRows(bookRes)
+
+	res, err := implObj.GetBookingByUniqCode(context.TODO(), "")
+	assert.Nil(t, err)
+	assert.Equal(t, res.ID, uint(1))
+}
+
+func TestImplementation_GetBookingByUniqCode_shouldNotFound(t *testing.T) {
+	sqlDB, db, mock := DbMock(t)
+	defer sqlDB.Close()
+
+	implObj := NewImplementation(db, nil)
+	selBooksql := "SELECT .+ FROM \"booking_tickets\" WHERE q_unique_code = .+"
+	bookRes := sqlmock.NewRows([]string{"id"})
+	mock.ExpectQuery(selBooksql).WillReturnRows(bookRes)
+
+	_, err := implObj.GetBookingByUniqCode(context.TODO(), "")
+	assert.NotNil(t, err)
+	assert.Equal(t, err.Error(), "record not found")
+}
+
+func TestImplementation_GetBookingDataByUniqCode_shouldHandle_notFound(t *testing.T) {
+	sqlDB, db, mock := DbMock(t)
+	defer sqlDB.Close()
+
+	implObj := NewImplementation(db, nil)
+
+	purchaseSql := "SELECT .+ FROM \"purchased_tickets\" WHERE .+"
+	bookingSql := "SELECT .+ FROM \"booking_tickets\" WHERE .+"
+	bookDetSql := "SELECT .+ FROM \"booking_details\" WHERE .+"
+	evSql := "SELECT .+ FROM \"events\" WHERE .+"
+
+	sqlRes := sqlmock.NewRows([]string{"id"}).AddRow(1)
+	bookDetRes := sqlmock.NewRows([]string{"id", "event_detail_id", "booking_ticket_id"}).AddRow(1, 3, 1)
+	evRes := sqlmock.NewRows([]string{"id", "event_detail_id"})
+
+	mock.ExpectQuery(bookingSql).WillReturnRows(sqlRes)
+	mock.ExpectQuery(bookDetSql).WillReturnRows(bookDetRes)
+	mock.ExpectQuery(purchaseSql).WillReturnRows(sqlRes)
+	mock.ExpectQuery(evSql).WillReturnRows(evRes)
+
+	_, err := implObj.GetBookingDataByUniqCode(context.TODO(), "")
+	assert.Equal(t, err.Error(), "record not found")
+	assert.Nil(t, mock.ExpectationsWereMet())
+}
+
+func TestImplementation_GetBookingDataByUniqCode(t *testing.T) {
+	sqlDB, db, mock := DbMock(t)
+	defer sqlDB.Close()
+
+	implObj := NewImplementation(db, nil)
+
+	purchaseSql := "SELECT .+ FROM \"purchased_tickets\" WHERE .+"
+	bookingSql := "SELECT .+ FROM \"booking_tickets\" WHERE .+"
+	bookDetSql := "SELECT .+ FROM \"booking_details\" WHERE .+"
+	evSql := "SELECT .+ FROM \"events\" WHERE .+"
+	evDetSql := "SELECT .+ FROM \"event_details\" WHERE .+"
+
+	sqlRes := sqlmock.NewRows([]string{"id"}).AddRow(1)
+	bookDetRes := sqlmock.NewRows([]string{"id", "event_detail_id", "booking_ticket_id"}).AddRow(1, 3, 1)
+	evRes := sqlmock.NewRows([]string{"id", "event_detail_id"}).AddRow(1, 3)
+	evDetRes := sqlmock.NewRows([]string{"id"}).AddRow(1).AddRow(3)
+	mock.ExpectQuery(bookingSql).WillReturnRows(sqlRes)
+	mock.ExpectQuery(bookDetSql).WillReturnRows(bookDetRes)
+	mock.ExpectQuery(purchaseSql).WillReturnRows(sqlRes)
+	mock.ExpectQuery(evSql).WillReturnRows(evRes)
+	mock.ExpectQuery(evDetSql).WillReturnRows(evDetRes)
+
+	purchaseData, err := implObj.GetBookingDataByUniqCode(context.TODO(), "")
+	assert.Nil(t, err)
+	assert.Equal(t, len(purchaseData.TicketDetails), 1)
+	assert.Nil(t, mock.ExpectationsWereMet())
+}
 
 func genBookDetail() []*models.BookingDetail {
 	var arrdetail []*models.BookingDetail

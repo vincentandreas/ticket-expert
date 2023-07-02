@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  database:
+    image: postgres
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgre-vol:/var/lib/postgresql/data
+  bucket:
+    image: mayth/simple-upload-server
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "25478:25478"
+    volumes:
+      - /tmp:/var/root
+    command: -token ${BUCKET_TOKEN} /var/root
+  cache:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${CACHE_PASSWORD}
+    volumes:
+      - data:/data
+volumes:
+  data:
+  postgre-vol:

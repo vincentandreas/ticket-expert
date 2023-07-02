@@ -44,6 +44,7 @@ func TestEvent_failed_when_eventdetail_empty(t *testing.T) {
 		EventCategory: "qwww",
 		EventLocation: "jakarta",
 		EventDesc:     "desc",
+		EventPhoto:    "http://www.a.com",
 		UserID:        1,
 		EventDetails:  nil,
 	}

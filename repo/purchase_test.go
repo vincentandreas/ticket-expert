@@ -78,31 +78,3 @@ func TestImplementation_SavePurchase_shouldFailed_whenAlreadyPurchased(t *testin
 	assert.Equal(t, err.Error(), "this booking already purchased")
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
-
-func TestImplementation_GetBookingByUniqCode_shouldFound(t *testing.T) {
-	sqlDB, db, mock := DbMock(t)
-	defer sqlDB.Close()
-
-	implObj := NewImplementation(db, nil)
-	selBooksql := "SELECT .+ FROM \"booking_tickets\" WHERE q_unique_code = .+"
-	bookRes := sqlmock.NewRows([]string{"id"}).AddRow(1)
-	mock.ExpectQuery(selBooksql).WillReturnRows(bookRes)
-
-	res, err := implObj.GetBookingByUniqCode(context.TODO(), "")
-	assert.Nil(t, err)
-	assert.Equal(t, res.ID, uint(1))
-}
-
-func TestImplementation_GetBookingByUniqCode_shouldNotFound(t *testing.T) {
-	sqlDB, db, mock := DbMock(t)
-	defer sqlDB.Close()
-
-	implObj := NewImplementation(db, nil)
-	selBooksql := "SELECT .+ FROM \"booking_tickets\" WHERE q_unique_code = .+"
-	bookRes := sqlmock.NewRows([]string{"id"})
-	mock.ExpectQuery(selBooksql).WillReturnRows(bookRes)
-
-	_, err := implObj.GetBookingByUniqCode(context.TODO(), "")
-	assert.NotNil(t, err)
-	assert.Equal(t, err.Error(), "record not found")
-}

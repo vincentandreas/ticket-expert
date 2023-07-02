@@ -31,10 +31,10 @@ func doMigration(db *gorm.DB) {
 }
 
 func dbSetup() (*gorm.DB, *redis.Client, error) {
-	username := os.Getenv("postgres_username")
-	password := os.Getenv("postgres_password")
-	dbName := os.Getenv("postgres_dbname")
-	host := os.Getenv("postgres_host")
+	username := os.Getenv("POSTGRES_USERNAME")
+	password := os.Getenv("POSTGRES_PASSWORD")
+	dbName := os.Getenv("POSTGRES_DBNAME")
+	host := os.Getenv("POSTGRES_HOST")
 	dbParams := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable host=%s", username, password, dbName, host)
 	conn, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  dbParams,
@@ -42,8 +42,8 @@ func dbSetup() (*gorm.DB, *redis.Client, error) {
 	}), &gorm.Config{})
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("redis_host"),
-		Password: os.Getenv("redis_passwd"),
+		Addr:     os.Getenv("REDIS_HOST"),
+		Password: os.Getenv("REDIS_PASSWD"),
 		DB:       0,
 	})
 	return conn, redisClient, err

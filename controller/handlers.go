@@ -39,7 +39,6 @@ func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router 
 	router.HandleFunc("/api/health", h.CheckHealth).Methods("GET")
 	router.HandleFunc("/api/waitingQueue/checkTotal/{eventId}", h.HandleWaitingRoomCheckTotal).Methods("GET")
 	router.HandleFunc("/api/waitingQueue", h.HandleSaveWaitingQueue).Methods("POST")
-	//router.HandleFunc("/api/testing/{id}", h.TempHandleTest).Methods("GET")
 	router.HandleFunc("/api/orderRoom/checkAvailable/{eventId}", h.HandleCheckOrderRoom).Methods("GET")
 	router.HandleFunc("/api/upload", h.UploadHandler).Methods("POST")
 	router.HandleFunc("/api/upload", h.UploadOptHandler).Methods("OPTIONS")
@@ -62,7 +61,6 @@ func (h *BaseHandler) UploadOptHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BaseHandler) UploadHandler(w http.ResponseWriter, r *http.Request) {
-	// Retrieve the uploaded file
 	sessUserId := h.SessionGetUserId(r)
 	if sessUserId == 0 {
 		utilities.WriteUnauthResp(w)

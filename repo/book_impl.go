@@ -209,7 +209,7 @@ func (repo *Implementation) GetBookingDataByUniqCode(ctx context.Context, uniqCo
 		evDetIds = append(evDetIds, bookingTicket.BookingDetails[i].EventDetailID)
 	}
 
-	if err := repo.db.WithContext(ctx).Where("id in ?", evDetIds).First(&eventDetails).Error; err != nil {
+	if err := repo.db.WithContext(ctx).Where("id in ?", evDetIds).Find(&eventDetails).Error; err != nil {
 		return purchaseDetails, err
 	}
 
