@@ -113,10 +113,10 @@ func IsValidUniqueId(repo *Implementation, req models.BookingTicket, ctx context
 var helperGetBooklistExceed = GetBookingExceedRetention
 var helperFindEvDetails = FindEventDetailsByIds
 
-func (repo *Implementation) CheckBookingPeriodically(ctx context.Context) {
-	log.Println("Scheduler start")
-	bookingRetention := 10
-	bookList, err := helperGetBooklistExceed(ctx, repo, bookingRetention)
+func (repo *Implementation) CheckBookingPeriod(ctx context.Context) {
+	log.Println("Check booking scheduler start")
+	bookingPeriod, _ := strconv.ParseInt(os.Getenv("BOOKING_PERIOD"), 10, 16)
+	bookList, err := helperGetBooklistExceed(ctx, repo, bookingPeriod)
 
 	if err != nil {
 		log.Println(err)
@@ -174,11 +174,11 @@ func (repo *Implementation) FindBookingByUserId(userId uint, ctx context.Context
 	return showBooks, err
 }
 
-func GetBookingExceedRetention(ctx context.Context, repo *Implementation, bookingRetention int) ([]*models.BookingTicket, error) {
+func GetBookingExceedRetention(ctx context.Context, repo *Implementation, bookingPeriod int64) ([]*models.BookingTicket, error) {
 	var bookList []*models.BookingTicket
 	joinQ := "LEFT JOIN purchased_tickets ON booking_tickets.id = purchased_tickets.booking_ticket_id"
 	whereQ := "booking_status = ? AND purchased_tickets.id IS NULL AND CAST(EXTRACT(EPOCH FROM (NOW() - \"booking_tickets\".\"created_at\")) /60 as INTEGER) > ?"
-	err := repo.db.WithContext(ctx).Preload("BookingDetails").Joins(joinQ).Where(whereQ, "active", bookingRetention).Find(&bookList).Error
+	err := repo.db.WithContext(ctx).Preload("BookingDetails").Joins(joinQ).Where(whereQ, "active", bookingPeriod).Find(&bookList).Error
 	return bookList, err
 }
 

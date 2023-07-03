@@ -165,14 +165,14 @@ func TestImplementation_getBookingExceedRetention(t *testing.T) {
 
 }
 
-func TestImplementation_CheckBookingPeriodically(t *testing.T) {
+func TestImplementation_CheckBookingPeriod(t *testing.T) {
 	sqlDB, db, mock := DbMock(t)
 	defer func() {
 		sqlDB.Close()
 		helperGetBooklistExceed = GetBookingExceedRetention
 	}()
 
-	helperGetBooklistExceed = func(ctx context.Context, repo *Implementation, bookingRetention int) ([]*models.BookingTicket, error) {
+	helperGetBooklistExceed = func(ctx context.Context, repo *Implementation, bookingRetention int64) ([]*models.BookingTicket, error) {
 		var booklist []*models.BookingTicket
 		sgl := models.BookingTicket{
 			BookingStatus:  "active",
@@ -203,7 +203,7 @@ func TestImplementation_CheckBookingPeriodically(t *testing.T) {
 	mock.ExpectQuery("INSERT INTO \"booking_tickets\" .+ VALUES .+ ON CONFLICT (.+) DO UPDATE SET.+").WillReturnRows(res)
 	mock.ExpectQuery("INSERT INTO \"booking_details\" .+ VALUES .+ ON CONFLICT (.+) DO UPDATE SET.+").WillReturnRows(res)
 	mock.ExpectCommit()
-	implObj.CheckBookingPeriodically(context.TODO())
+	implObj.CheckBookingPeriod(context.TODO())
 	assert.Nil(t, mock.ExpectationsWereMet())
 }
 

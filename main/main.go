@@ -1,3 +1,4 @@
+// swagger:meta
 package main
 
 import (
@@ -49,6 +50,25 @@ func dbSetup() (*gorm.DB, *redis.Client, error) {
 	return conn, redisClient, err
 }
 
+// @title           Ticket Expert API
+// @version         2.0
+// @description     Used for ordering ticket.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /api/v1
+
+// @securityDefinitions.basic  BasicAuth
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	db, redis, err := dbSetup()
 	if err != nil {
@@ -62,7 +82,7 @@ func main() {
 	})
 
 	implementObj := repo.NewImplementation(db, redis)
-	//if err := gocron.Every(15).Second().Do(implementObj.CheckBookingPeriodically, context.TODO()); err != nil {
+	//if err := gocron.Every(15).Second().Do(implementObj.CheckBookingPeriod, context.TODO()); err != nil {
 	//	panic(err)
 	//	return
 	//}
