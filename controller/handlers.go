@@ -256,14 +256,6 @@ func (h *BaseHandler) HandleGetUserData(w http.ResponseWriter, r *http.Request) 
 	utilities.WriteSuccessWithDataResp(w, data.Extract())
 }
 
-// swagger:route  POST /api/user
-// Register user
-//
-// consumes:
-//         - application/json
-// responses:
-//  401: Unauthorized
-//  200: Success
 func (h *BaseHandler) HandleSaveUser(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var userRequest models.User

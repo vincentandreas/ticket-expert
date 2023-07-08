@@ -1,0 +1,121 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Ticket Expert API"
+  description: "Used for ordering ticket."
+host: "http://localhost"
+basePath: "/api"
+schemes:
+  - "http"
+produces:
+  - "application/json"
+consumes:
+  - "application/json"
+
+paths:
+  /user:
+    get:
+      summary: "Get user detail"
+      description: "Returns user detail based on session"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/OutGetUser"
+        401:
+          description: "Unauthorized"
+
+    post:
+      summary: "Register new user"
+      description: "Used for register new user"
+
+      parameters:
+        - in: body
+          name: user
+          schema:
+            $ref: "#/definitions/LoginRequest"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/BaseResponse"
+        400:
+          description: "Invalid request"
+
+  /user/login:
+    post:
+      summary: "Used for login"
+      description: "Endpoint for authenticate user"
+      parameters:
+        - name: "body"
+          in: "body"
+          description: "User credentials"
+          required: true
+          schema:
+            $ref: "#/definitions/UserLogin"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/BaseResponse"
+        400:
+          description: "Invalid ID supplied"
+        404:
+          description: "User not found"
+
+definitions:
+  UserLogin:
+    type: "object"
+    properties:
+      user_name:
+        type: "string"
+      password:
+        type: "string"
+  User:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      username:
+        type: "string"
+  BaseResponse:
+    type: "object"
+    properties:
+      result:
+        type: "string"
+      response_code:
+        type: "string"
+      response_message:
+        type: "string"
+
+  OutGetUser:
+    type: "object"
+    properties:
+      data:
+        type: "object"
+        properties:
+          full_name:
+            type: "string"
+          user_name:
+            type: "string"
+          phone_number:
+            type: "string"
+      response_code:
+        type: "string"
+      response_message:
+        type: "string"
+  LoginRequest:
+    type: "object"
+    properties:
+      user_name:
+        type: "string"
+      password:
+        type: "string"
+      full_name:
+        type: "string"
+      role:
+        type: "string"
+      phone_number:
+        type: "string"
+
