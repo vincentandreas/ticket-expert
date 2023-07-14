@@ -17,7 +17,7 @@ func (repo *Implementation) CountTotalPeopleInOrderRoom(eventId uint, ctx contex
 	total := helperCountPeople(repo, eventId, ctx)
 	return total
 }
-
+// will CountPeopleInOrderRoom, if already slot available, it will get the user in waiting room. 
 func (repo *Implementation) CheckOrderRoom(eventId uint, ctx context.Context) []string {
 	var qUniqueCodes []string
 	for true {

@@ -16,6 +16,8 @@ paths:
   /user:
     get:
       summary: "Get user detail"
+      tags:
+        - user
       description: "Returns user detail based on session"
       responses:
         200:
@@ -27,6 +29,8 @@ paths:
 
     post:
       summary: "Register new user"
+      tags:
+        - user
       description: "Used for register new user"
 
       parameters:
@@ -45,12 +49,13 @@ paths:
   /user/login:
     post:
       summary: "Used for login"
+      tags:
+        - user
       description: "Endpoint for authenticate user"
       parameters:
         - name: "body"
           in: "body"
           description: "User credentials"
-          required: true
           schema:
             $ref: "#/definitions/UserLogin"
       responses:
@@ -62,7 +67,202 @@ paths:
           description: "Invalid ID supplied"
         404:
           description: "User not found"
+  /event:
+    post:
+      summary: "Used for add new event"
+      tags:
+        - event
+      parameters:
+        - name: "body"
+          in: "body"
+          schema:
+            $ref: "#/definitions/EventData"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/BaseResponse"
+        400:
+          description: "Bad request"
+    get:
+      summary: "Get Events"
+      tags:
+        - event
+      description: "Endpoint for retrieving events"
+      parameters:
+        - name: "category"
+          in: "query"
+          description: "Event category"
+          required: false
+          type: "string"
+        - name: "city"
+          in: "query"
+          description: "Event city"
+          required: false
+          type: "string"
+        - name: "name"
+          in: "query"
+          description: "Event name"
+          required: false
+          type: "string"
+      responses:
+        200:
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/EventResponse"
+  /event/{eventId}:
+    get:
+      summary: "Get Event by ID"
+      tags:
+        - event
+      description: "Retrieves information about a specific event."
+      produces:
+        - "application/json"
+      parameters:
+        - name: "eventId"
+          in: "path"
+          description: "ID of the event to retrieve."
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/EventResponse2"
+  /book:
+    post:
+      summary: "Create Event Booking"
+      tags:
+        - booking
+      parameters:
+        - name: "body"
+          in: "body"
+          schema:
+            $ref: "#/definitions/BookingRequest"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/BaseResponse"
+    get:
+      summary: "Get Event Bookings"
+      tags:
+        - booking
+      responses:
+        200:
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/BookingListResponse"
 
+  /book/{qUniqueCode}:
+    get:
+      summary: "Get Booking by Unique Code"
+      tags:
+        - booking
+      parameters:
+        - name: "qUniqueCode"
+          in: "path"
+          description: "Unique code of the booking to retrieve."
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/BookingResponse"
+  /purchase:
+    post:
+      summary: "Create Event Purchase"
+      tags:
+        - purchase
+      parameters:
+        - name: "body"
+          in: "body"
+          schema:
+            $ref: "#/definitions/PurchaseRequest"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/BaseResponse"
+  /waitingQueue:
+    post:
+      summary: "Join Waiting Queue"
+      tags:
+        - waitingQueue
+      parameters:
+        - name: "body"
+          in: "body"
+          schema:
+            $ref: "#/definitions/JoinQueueRequest"
+      responses:
+        200:
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/JoinQueueResponse"
+        default:
+          description: "Error response"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /waitingQueue/checkTotal/{eventId}:
+    get:
+      summary: "Check Total in Waiting Queue"
+      tags:
+        - waitingQueue
+      parameters:
+        - name: "eventId"
+          in: "path"
+          description: "ID of the event to check total waiting queue."
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/TotalQueueResponse"
+  /subQueue:
+    get:
+      summary: "Get Sub Queue"
+      tags:
+        - waitingQueue
+      parameters:
+        - name: "timeout"
+          in: "query"
+          description: "Timeout duration in seconds."
+          required: true
+          type: "integer"
+        - name: "category"
+          in: "query"
+          description: "Category ID of the sub queue."
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/SubQueueResponse"
+        default:
+          description: "Error response"
+          schema:
+            $ref: "#/definitions/SubQueueTO"
+  /upload:
+    post:
+      summary: "Upload File"
+      tags:
+        - upload
+      consumes:
+        - "multipart/form-data"
+      parameters:
+        - name: "file"
+          in: "formData"
+          description: "File to upload"
+          required: true
+          type: "file"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/BaseResponse"
 definitions:
   UserLogin:
     type: "object"
@@ -118,4 +318,257 @@ definitions:
         type: "string"
       phone_number:
         type: "string"
+  EventData:
+    type: "object"
+    properties:
+      event_location:
+        type: "string"
+      event_category:
+        type: "string"
+      event_name:
+        type: "string"
+      event_desc:
+        type: "string"
+      event_details:
+        type: "array"
+        items:
+          $ref: "#/definitions/TicketDetails"
+  TicketDetails:
+    type: "object"
+    properties:
+      ticket_class:
+        type: "string"
+      ticket_price:
+        type: "string"
+      ticket_quota:
+        type: "integer"
+  EventResponse:
+    type: "object"
+    properties:
+      data:
+        type: "array"
+        items:
+          $ref: "#/definitions/Event"
+      response_code:
+        type: "string"
+      response_message:
+        type: "string"
+  Event:
+    type: "object"
+    properties:
+      event_id:
+        type: "integer"
+      event_name:
+        type: "string"
+      event_category:
+        type: "string"
+      event_location:
+        type: "string"
+      event_photo:
+        type: "string"
+      full_name:
+        type: "string"
+      user_id:
+        type: "integer"
+  EventResponse2:
+    type: "object"
+    properties:
+      data:
+        $ref: "#/definitions/EventData2"
+      response_code:
+        type: "string"
+      response_message:
+        type: "string"
 
+  EventData2:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+      event_name:
+        type: "string"
+      event_desc:
+        type: "string"
+      event_category:
+        type: "string"
+      event_location:
+        type: "string"
+      creator_id:
+        type: "integer"
+      event_photo:
+        type: "string"
+      event_details:
+        type: "array"
+        items:
+          $ref: "#/definitions/TicketDetail2"
+
+  TicketDetail2:
+    type: "object"
+    properties:
+      ticket_class:
+        type: "string"
+      ticket_price:
+        type: "string"
+      ticket_quota:
+        type: "integer"
+      ticket_remaining:
+        type: "integer"
+  BookingRequest:
+    type: "object"
+    properties:
+      event_id:
+        type: "integer"
+      q_unique_code:
+        type: "string"
+      booking_details:
+        type: "array"
+        items:
+          $ref: "#/definitions/BookingDetail"
+
+  BookingDetail:
+    type: "object"
+    properties:
+      qty:
+        type: "integer"
+      event_detail_id:
+        type: "integer"
+  BookingListResponse:
+    type: "object"
+    properties:
+      data:
+        type: "array"
+        items:
+          $ref: "#/definitions/BookingSummary"
+      response_code:
+        type: "string"
+      response_message:
+        type: "string"
+  BookingSummary:
+    type: "object"
+    properties:
+      event_name:
+        type: "string"
+      q_unique_code:
+        type: "string"
+      booking_status:
+        type: "string"
+      total_price:
+        type: "string"
+  BookingResponse:
+    type: "object"
+    properties:
+      data:
+        $ref: "#/definitions/BookingDetails"
+      response_code:
+        type: "string"
+      response_message:
+        type: "string"
+
+  BookingDetails:
+    type: "object"
+    properties:
+      admin_fee:
+        type: "string"
+      event_category:
+        type: "string"
+      event_name:
+        type: "string"
+      q_unique_code:
+        type: "string"
+      booking_status:
+        type: "string"
+      total_price:
+        type: "string"
+      ticket_details:
+        type: "array"
+        items:
+          $ref: "#/definitions/TicketDetail"
+
+  TicketDetail:
+    type: "object"
+    properties:
+      qty:
+        type: "integer"
+      price:
+        type: "string"
+      sub_total:
+        type: "string"
+      ticket_class:
+        type: "string"
+
+  ErrorResponse:
+    type: "object"
+    properties:
+      error_code:
+        type: "string"
+      error_message:
+        type: "string"
+  PurchaseRequest:
+    type: "object"
+    properties:
+      booking_uniq_code:
+        type: "string"
+      payment_method:
+        type: "string"
+      trans_ref_no:
+        type: "string"
+  JoinQueueRequest:
+    type: "object"
+    properties:
+      event_id:
+        type: "integer"
+
+  JoinQueueResponse:
+    type: "object"
+    properties:
+      data:
+        $ref: "#/definitions/QueueInfo"
+      response_code:
+        type: "string"
+      response_message:
+        type: "string"
+
+  QueueInfo:
+    type: "object"
+    properties:
+      user_id:
+        type: "integer"
+      event_id:
+        type: "integer"
+      q_unique_code:
+        type: "string"
+  TotalQueueResponse:
+    type: "object"
+    properties:
+      data:
+        type: "integer"
+      response_code:
+        type: "string"
+      response_message:
+        type: "string"
+  SubQueueResponse:
+    type: "object"
+    properties:
+      events:
+        type: "array"
+        items:
+          $ref: "#/definitions/SubQueueEvent"
+
+  SubQueueEvent:
+    type: "object"
+    properties:
+      timestamp:
+        type: "integer"
+      category:
+        type: "string"
+      data:
+        type: "string"
+      id:
+        type: "string"
+  SubQueueTO:
+    type: "object"
+    properties:
+      timeout:
+        type: "string"
+      timestamp:
+        type: "number"

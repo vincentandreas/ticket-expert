@@ -3,12 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-openapi/runtime/middleware"
-	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
-	"github.com/jcuga/golongpoll"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,6 +11,13 @@ import (
 	"ticket-expert/repo"
 	"ticket-expert/services"
 	"ticket-expert/utilities"
+
+	"github.com/go-openapi/runtime/middleware"
+	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/jcuga/golongpoll"
 )
 
 type BaseHandler struct {
@@ -66,27 +67,11 @@ func NewBaseHandler(repo *repo.Implementation, lpMngr *golongpoll.LongpollManage
 	}
 }
 
-// swagger:route  OPTIONS /api/upload
-// Used for CORS.
-//
-// consumes:
-//         - application/json
-// responses:
-//  200: Success
 func (h *BaseHandler) UploadOptHandler(w http.ResponseWriter, r *http.Request) {
 	utilities.WriteSuccessResp(w)
 	return
 }
 
-// swagger:route  POST /api/upload
-// Used for update photos to upload server.
-//
-// consumes:
-//         - application/json
-// responses:
-//  400: Bad Request
-//  401: Unauthorized
-//  200: Success
 func (h *BaseHandler) UploadHandler(w http.ResponseWriter, r *http.Request) {
 	sessUserId := h.SessionGetUserId(r)
 	if sessUserId == 0 {
@@ -109,15 +94,6 @@ func (h *BaseHandler) UploadHandler(w http.ResponseWriter, r *http.Request) {
 	utilities.WriteSuccessWithDataResp(w, photoUrl)
 }
 
-// swagger:route  GET /api/book/{qUniqueCode}
-// Get booking data by qUniqueCode
-//
-// consumes:
-//         - application/json
-// responses:
-//  400: Bad request
-//  401: Unauthorized
-//  200: Success
 func (h *BaseHandler) HandleGetBookData(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	qUniqCode := vars["qUniqueCode"]
@@ -130,15 +106,6 @@ func (h *BaseHandler) HandleGetBookData(w http.ResponseWriter, r *http.Request) 
 	utilities.WriteSuccessWithDataResp(w, ticketDetail)
 }
 
-// swagger:route  GET /api/book
-// Get booking data by userId. UserId got from session
-//
-// consumes:
-//         - application/json
-// responses:
-//  400: Bad request
-//  401: Unauthorized
-//  200: Success
 func (h *BaseHandler) HandleFindBookingByUserId(w http.ResponseWriter, r *http.Request) {
 	sessUserId := h.SessionGetUserId(r)
 	if sessUserId == 0 {
@@ -155,30 +122,11 @@ func (h *BaseHandler) HandleFindBookingByUserId(w http.ResponseWriter, r *http.R
 	utilities.WriteSuccessWithDataResp(w, ticketDetail)
 }
 
-// swagger:route  GET /api/subQueue
-// Subscribe the queue, to enter to the order room.
-//
-// consumes:
-//         - application/json
-// parameters:
-//  + category
-//  + timeout
-// responses:
-//  400: Bad request
-//  401: Unauthorized
-//  200: Success
 func (h *BaseHandler) WrapSubsHandler(w http.ResponseWriter, r *http.Request) {
 	utilities.SetAllHeaders(w)
 	h.LPManager.SubscriptionHandler(w, r)
 }
 
-// swagger:route  GET /api/health
-// Use to check health
-//
-// consumes:
-//         - application/json
-// responses:
-//  200: Success
 func (h *BaseHandler) CheckHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	temp := map[string]string{
@@ -230,18 +178,6 @@ func (h *BaseHandler) SessionGetUserId(r *http.Request) uint {
 	return userId
 }
 
-// HandleGetUserData ShowAccount godoc
-// @Summary      Show an account
-// @Description  get string by ID
-// @Tags         accounts
-// @Accept       json
-// @Produce      json
-// @Param        id   path      int  true  "Account ID"
-// @Success      200  {object}  model.Account
-// @Failure      400  {object}  httputil.HTTPError
-// @Failure      404  {object}  httputil.HTTPError
-// @Failure      500  {object}  httputil.HTTPError
-// @Router       /accounts/{id} [get]
 func (h *BaseHandler) HandleGetUserData(w http.ResponseWriter, r *http.Request) {
 	sessUserId := h.SessionGetUserId(r)
 	if sessUserId == 0 {
@@ -281,15 +217,6 @@ func checkError(w http.ResponseWriter, err error) bool {
 	return false
 }
 
-// swagger:route  POST /api/waitingQueue
-// Save waiting queue
-//
-// consumes:
-//         - application/json
-// responses:
-//  401: Unauthorized
-//  400: Bad Request
-//  200: Success
 func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Request) {
 
 	sessUserId := h.SessionGetUserId(r)
@@ -334,15 +261,7 @@ func (h *BaseHandler) HandleSaveWaitingQueue(w http.ResponseWriter, r *http.Requ
 	utilities.WriteSuccessWithDataResp(w, userRequest)
 }
 
-// swagger:route  POST /api/event
-// Save event
-//
-// consumes:
-//         - application/json
-// responses:
-//  401: Unauthorized
-//  400: Bad Request
-//  200: Success
+
 func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
 	sessUserId := h.SessionGetUserId(r)
 	if sessUserId == 0 {
@@ -372,23 +291,12 @@ func (h *BaseHandler) HandleSaveEvent(w http.ResponseWriter, r *http.Request) {
 	err = h.Repo.SaveEvent(reqObj, r.Context())
 	if err != nil {
 		log.Println(err)
-		utilities.WriteErrorResp(w, 401, err.Error())
+		utilities.WriteErrorResp(w, 400, err.Error())
 		return
 	}
 	utilities.WriteSuccessResp(w)
 }
 
-// swagger:route  POST /api/book
-// Save booking data
-//
-// produces:
-//         - application/json
-// consumes:
-//         - application/json
-// responses:
-//  401: Unauthorized
-//  400: Bad Request
-//  200: Success
 func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) {
 	sessUserId := h.SessionGetUserId(r)
 	if sessUserId == 0 {
@@ -409,7 +317,7 @@ func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) 
 	err := h.Repo.SaveBooking(reqObj, r.Context())
 	if err != nil {
 		log.Println(err)
-		utilities.WriteErrorResp(w, 403, err.Error())
+		utilities.WriteErrorResp(w, 500, err.Error())
 		return
 	}
 	h.Repo.CheckOrderRoom(reqObj.EventID, r.Context())
@@ -417,17 +325,6 @@ func (h *BaseHandler) HandleSaveBooking(w http.ResponseWriter, r *http.Request) 
 	utilities.WriteSuccessResp(w)
 }
 
-// swagger:route  POST /api/purchase
-// Save purchase
-//
-// produces:
-//         - application/json
-// consumes:
-//         - application/json
-// responses:
-//  401: Unauthorized
-//  400: Bad Request
-//  200: Success
 func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var reqObj models.PurchaseReq
@@ -456,17 +353,6 @@ func (h *BaseHandler) HandleSavePurchased(w http.ResponseWriter, r *http.Request
 	utilities.WriteSuccessResp(w)
 }
 
-// swagger:route  POST /api/orderRoom/checkAvailable/{eventId}
-// OrderRoom - check available room.
-//
-// produces:
-//         - application/json
-// consumes:
-//         - application/json
-// responses:
-//  401: Unauthorized
-//  400: Bad Request
-//  200: Success
 func (h *BaseHandler) HandleCheckOrderRoom(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idstr := vars["eventId"]
@@ -497,10 +383,10 @@ func (h *BaseHandler) HandleSearchEventById(w http.ResponseWriter, r *http.Reque
 	res, err := h.Repo.FindByEventId(idstr, r.Context())
 	if err != nil {
 		log.Println(err)
-		utilities.WriteErrorResp(w, 403, "Failed to get data")
+		utilities.WriteErrorResp(w, 500, "Failed to get data")
 		return
 	}
-	utilities.WriteSuccessWithDataResp(w, res)
+	utilities.WriteSuccessWithDataResp(w, res.Extract())
 }
 
 func (h *BaseHandler) HandleCheckBookingPeriod(w http.ResponseWriter, r *http.Request) {
@@ -521,7 +407,7 @@ func (h *BaseHandler) HandleSearchEvent(w http.ResponseWriter, r *http.Request) 
 	res, err := h.Repo.FindEventByCondition(name, city, category, r.Context())
 	if err != nil {
 		log.Println(err)
-		utilities.WriteErrorResp(w, 403, "Failed to get data")
+		utilities.WriteErrorResp(w, 500, "Failed to get data")
 		return
 	}
 	utilities.WriteSuccessWithDataResp(w, res)

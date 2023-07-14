@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -30,6 +32,14 @@ func (usr *User) Extract() OutUser {
 	return ou
 }
 
+type CustomModel struct {
+	ID        uint `gorm:"primarykey" json:"-"` 
+	CreatedAt time.Time `json:"-"`
+	UpdatedAt time.Time`json:"-"`
+	DeletedAt *time.Time `gorm:"index" json:"-"`
+}
+
+
 type UserLogin struct {
 	UserName string `json:"user_name" validate:"required"`
 	Password string `json:"password" validate:"required"`
@@ -53,24 +63,47 @@ type Event struct {
 	EventDesc      string         `json:"event_desc" validate:"required"`
 	EventCategory  string         `json:"event_category" validate:"required"  gorm:"not null"`
 	EventLocation  string         `json:"event_location" validate:"required"  gorm:"not null"`
-	UserID         uint           `json:"user_id" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	UserID         uint           `json:"creator_id" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	EventPhoto     string         `json:"event_photo" validate:"required"`
 	EventDetails   []*EventDetail `json:"event_details" validate:"min=1,dive"`
 	BookingTickets []BookingTicket
 }
 
+type OutEvent struct {
+	ID            uint           `json:"id"`
+	EventName     string         `json:"event_name"`
+	EventDesc     string         `json:"event_desc"`
+	EventCategory string         `json:"event_category"`
+	EventLocation string         `json:"event_location"`
+	UserID        uint           `json:"creator_id"`
+	EventPhoto    string         `json:"event_photo"`
+	EventDetails  []*EventDetail `json:"event_details"`
+}
+
+func (ev *Event) Extract() OutEvent {
+	return OutEvent{
+		EventName:     ev.EventName,
+		EventDesc:     ev.EventDesc,
+		EventCategory: ev.EventCategory,
+		EventLocation: ev.EventLocation,
+		UserID:        ev.UserID,
+		EventPhoto:    ev.EventPhoto,
+		EventDetails:  ev.EventDetails,
+	}
+}
+
 type EventDetail struct {
-	gorm.Model
+	CustomModel		
 	TicketClass     string `json:"ticket_class" validate:"required"`
 	TicketPrice     string `json:"ticket_price" validate:"required"`
 	TicketQuota     uint   `json:"ticket_quota" validate:"required"`
 	TicketRemaining uint   `json:"ticket_remaining"`
-	EventID         uint   `gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
-	BookingDetail   []*BookingDetail
+	EventID         uint   `json:"-" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
+	BookingDetail   []*BookingDetail `json:"-"`
 }
 
 type PurchasedTicket struct {
-	gorm.Model
+	gorm.Model		
 	UserID          uint   `validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	BookingTicketID uint   `json:"booking_ticket_id" validate:"required" gorm:"UNIQUE_INDEX:compositeindex;index;not null"`
 	PaymentMethod   string `json:"payment_method" validate:"required"`
