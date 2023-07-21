@@ -12,7 +12,6 @@ import (
 	"ticket-expert/services"
 	"ticket-expert/utilities"
 
-	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -46,15 +45,6 @@ func HandleRequests(h *BaseHandler, lp *golongpoll.LongpollManager) *mux.Router 
 	router.HandleFunc("/api/upload", h.UploadOptHandler).Methods("OPTIONS")
 	router.HandleFunc("/api/subQueue", h.WrapSubsHandler).Methods("GET")
 	router.HandleFunc("/api/book/{qUniqueCode}", h.HandleGetBookData).Methods("GET")
-
-	opts := middleware.SwaggerUIOpts{SpecURL: "./docs/swagger.yaml"}
-	sh := middleware.SwaggerUI(opts, nil)
-	router.Handle("/docs", sh)
-
-	// documentation for share
-	// opts1 := middleware.RedocOpts{SpecURL: "/swagger.yaml"}
-	// sh1 := middleware.Redoc(opts1, nil)
-	// r.Handle("/docs", sh1)
 
 	return router
 }
