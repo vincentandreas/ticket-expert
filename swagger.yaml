@@ -131,7 +131,7 @@ paths:
             $ref: "#/definitions/EventResponse2"
   /book:
     post:
-      summary: "Create Event Booking"
+      summary: "Book an event"
       tags:
         - booking
       parameters:
@@ -156,13 +156,13 @@ paths:
 
   /book/{qUniqueCode}:
     get:
-      summary: "Get Booking by Unique Code"
+      summary: "Get Booking by queue unique Code"
       tags:
         - booking
       parameters:
         - name: "qUniqueCode"
           in: "path"
-          description: "Unique code of the booking to retrieve."
+          description: "queue unique code of the booking to retrieve."
           required: true
           type: "string"
       responses:
@@ -206,7 +206,7 @@ paths:
             $ref: "#/definitions/ErrorResponse"
   /waitingQueue/checkTotal/{eventId}:
     get:
-      summary: "Check Total in Waiting Queue"
+      summary: "Check total user in Waiting Room"
       tags:
         - waitingQueue
       parameters:
@@ -222,7 +222,7 @@ paths:
             $ref: "#/definitions/TotalQueueResponse"
   /subQueue:
     get:
-      summary: "Get Sub Queue"
+      summary: "Subscribe to waiting room "
       tags:
         - waitingQueue
       parameters:
@@ -233,7 +233,7 @@ paths:
           type: "integer"
         - name: "category"
           in: "query"
-          description: "Category ID of the sub queue."
+          description: "queueUniqueId in waiting room"
           required: true
           type: "string"
       responses:
