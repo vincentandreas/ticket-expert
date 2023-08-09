@@ -1,18 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/gorilla/sessions"
-	"github.com/jcuga/golongpoll"
-	"github.com/redis/go-redis/v9"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
 	"ticket-expert/controller"
 	"ticket-expert/models"
 	"ticket-expert/repo"
+
+	"github.com/gorilla/sessions"
+	"github.com/jasonlvhit/gocron"
+	"github.com/jcuga/golongpoll"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var store *sessions.CookieStore
@@ -62,11 +65,10 @@ func main() {
 	})
 
 	implementObj := repo.NewImplementation(db, redis)
-	//if err := gocron.Every(15).Second().Do(implementObj.CheckBookingPeriod, context.TODO()); err != nil {
-	//	panic(err)
-	//	return
-	//}
-	//<-gocron.Start()
+	if err := gocron.Every(15).Second().Do(implementObj.CheckBookingPeriod, context.TODO()); err != nil {
+		panic(err)
+	}
+	<-gocron.Start()
 	h := controller.NewBaseHandler(implementObj, lpMngr, store)
 
 	log.Fatal(http.ListenAndServe(":10000", controller.HandleRequests(h, lpMngr)))
