@@ -34,9 +34,10 @@ func doMigration(db *gorm.DB) {
 }
 
 func dbSetup() (*gorm.DB, *redis.Client, error) {
-	username := os.Getenv("POSTGRES_USERNAME")
+	username := os.Getenv("POSTGRES_USER")
 	password := os.Getenv("POSTGRES_PASSWORD")
-	dbName := os.Getenv("POSTGRES_DBNAME")
+	dbName := os.Getenv("POSTGRES_DB")
+	fmt.Printf("dbname %s", dbName)
 	host := os.Getenv("POSTGRES_HOST")
 	dbParams := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable host=%s", username, password, dbName, host)
 	conn, err := gorm.Open(postgres.New(postgres.Config{
@@ -46,7 +47,7 @@ func dbSetup() (*gorm.DB, *redis.Client, error) {
 
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_HOST"),
-		Password: os.Getenv("REDIS_PASSWD"),
+		Password: os.Getenv("CACHE_PASSWORD"),
 		DB:       0,
 	})
 	return conn, redisClient, err
@@ -68,7 +69,7 @@ func main() {
 	if err := gocron.Every(15).Second().Do(implementObj.CheckBookingPeriod, context.TODO()); err != nil {
 		panic(err)
 	}
-	<-gocron.Start()
+	// <-gocron.Start()
 	h := controller.NewBaseHandler(implementObj, lpMngr, store)
 
 	log.Fatal(http.ListenAndServe(":10000", controller.HandleRequests(h, lpMngr)))

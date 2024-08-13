@@ -7,40 +7,32 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+
+	"github.com/google/uuid"
 )
 
 func UploadToBucket(f2 multipart.File, fname string) string {
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
+	body := bytes.NewBuffer(nil)
 
-	fileField, err := writer.CreateFormFile("file", fname)
+	_, err := io.Copy(body, f2)
 	if err != nil {
 		fmt.Println(err)
 		return ""
 	}
 
-	_, err = io.Copy(fileField, f2)
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
-
-	token := os.Getenv("BUCKET_TOKEN")
 	bucketUrl := os.Getenv("BUCKET_URL")
-	_ = writer.WriteField("token", token)
+	bucketName := os.Getenv("BUCKET_NAME")
 
-	err = writer.Close()
+	fileName := uuid.New().String()
+
+
+	fullUrl := bucketUrl + "/" + bucketName + "/" + fileName
+
+	request, err := http.NewRequest("PUT", fullUrl, bytes.NewBuffer(body.Bytes()))
 	if err != nil {
 		fmt.Println(err)
 		return ""
 	}
-
-	request, err := http.NewRequest("POST", bucketUrl+"/upload", body)
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
-	request.Header.Set("Content-Type", writer.FormDataContentType())
 
 	client := &http.Client{}
 	response, err := client.Do(request)
@@ -51,8 +43,7 @@ func UploadToBucket(f2 multipart.File, fname string) string {
 	defer response.Body.Close()
 
 	if response.StatusCode == 200 {
-		url := bucketUrl + "/files/" + fname + "?token=" + token
-		return url
+		return fullUrl
 	}
 	return ""
 }

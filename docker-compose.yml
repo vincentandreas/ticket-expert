@@ -10,15 +10,13 @@ services:
     volumes:
       - postgre-vol:/var/lib/postgresql/data
   bucket:
-    image: mayth/simple-upload-server
+    image: adobe/s3mock
     restart: always
-    env_file:
-      - .env
+    environment:
+      - initialBuckets=expertbucket
     ports:
-      - "25478:25478"
-    volumes:
-      - /tmp:/var/root
-    command: -token ${BUCKET_TOKEN} /var/root
+      - "9090:9090"
+      - "9091:9091"
   cache:
     image: redis:6.2-alpine
     restart: always
